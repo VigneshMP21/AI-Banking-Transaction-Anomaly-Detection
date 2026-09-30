@@ -26,6 +26,7 @@ import {
   Zap, 
   Lock, 
   ArrowLeft, 
+  ArrowRight,
   TrendingUp, 
   Sliders, 
   Check, 
