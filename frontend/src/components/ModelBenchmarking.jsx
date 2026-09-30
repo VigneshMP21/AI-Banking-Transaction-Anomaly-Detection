@@ -63,7 +63,7 @@ export default function ModelBenchmarking() {
   const [selectedModel, setSelectedModel] = useState(MODELS[0]);
 
   return (
-    <section id="models" className="py-20 relative bg-white border-t border-slate-100">
+    <section id="solution" className="py-20 relative bg-white border-t border-slate-100">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         
         {/* Section Header */}

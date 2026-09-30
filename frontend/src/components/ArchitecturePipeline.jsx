@@ -44,7 +44,7 @@ export default function ArchitecturePipeline() {
   const [activeStage, setActiveStage] = useState(0);
 
   return (
-    <section id="architecture" className="py-20 relative bg-white">
+    <section id="how-it-works" className="py-20 relative bg-white">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         
         {/* Section Header */}

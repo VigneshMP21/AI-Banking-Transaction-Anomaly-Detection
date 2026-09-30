@@ -40,7 +40,7 @@ export default function ExplainableRiskEngine() {
   const [activePillar, setActivePillar] = useState(XAI_PILLARS[0]);
 
   return (
-    <section id="xai-engine" className="py-20 relative bg-white border-t border-slate-100">
+    <section id="about" className="py-20 relative bg-white border-t border-slate-100">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         
         {/* Section Title */}

@@ -8,7 +8,7 @@ export default function Footer() {
   };
 
   return (
-    <footer className="border-t border-slate-200 bg-slate-900 pt-16 pb-12 text-slate-400 text-xs">
+    <footer id="contact" className="border-t border-slate-200 bg-slate-900 pt-16 pb-12 text-slate-400 text-xs">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         
         <div className="grid grid-cols-1 md:grid-cols-4 gap-8 mb-12">
@@ -16,13 +16,18 @@ export default function Footer() {
           {/* Brand Info */}
           <div className="md:col-span-2 space-y-4">
             <div className="flex items-center gap-3">
-              <img 
-                src={logoImg} 
-                alt="AI Banking Shield Logo" 
-                className="w-9 h-9 rounded-xl border border-sky-400/30 object-cover shadow-sm"
-              />
-              <span className="text-base font-black text-white">
-                Bank<span className="text-sky-400">Guard</span> AI
+              <div className="w-8 h-9 flex-shrink-0">
+                <svg viewBox="0 0 44 48" fill="none" xmlns="http://www.w3.org/2000/svg" className="w-full h-full">
+                  <path d="M22 2L4 8.5V21.5C4 32.5 11.5 42.5 22 46C32.5 42.5 40 32.5 40 21.5V8.5L22 2Z" fill="#0052CC" />
+                  <path d="M22 5.5L7.5 11V21.5C7.5 30.5 13.5 38.8 22 42C30.5 38.8 36.5 30.5 36.5 21.5V11L22 5.5Z" fill="#FFFFFF" />
+                  <rect x="13.5" y="24" width="4" height="10" rx="1.5" fill="#0052CC" />
+                  <rect x="20" y="17" width="4" height="17" rx="1.5" fill="#0052CC" />
+                  <rect x="26.5" y="20.5" width="4" height="13.5" rx="1.5" fill="#0052CC" />
+                  <path d="M15.5 23L22 16L28.5 19.5" stroke="#38BDF8" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+                </svg>
+              </div>
+              <span className="text-lg font-extrabold text-white">
+                BankGuard <span className="text-sky-400">AI</span>
               </span>
             </div>
             <p className="text-slate-400 text-xs max-w-md leading-relaxed">
