@@ -25,6 +25,9 @@ build/
 develop-eggs/
 eggs/
 .eggs/
+*.db
+*.sqlite
+*.sqlite3
 
 # IDE and OS
 .vscode/

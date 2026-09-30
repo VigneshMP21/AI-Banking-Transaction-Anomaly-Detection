@@ -22,11 +22,11 @@ export default function Footer() {
                 className="w-9 h-9 rounded-xl border border-sky-400/30 object-cover shadow-sm"
               />
               <span className="text-base font-black text-white">
-                Aegis<span className="text-sky-400">Bank</span> AI
+                Bank<span className="text-sky-400">Guard</span> AI
               </span>
             </div>
             <p className="text-slate-400 text-xs max-w-md leading-relaxed">
-              AI Banking Transaction Anomaly Detection & Explainable Risk Analysis System. Delivering real-time deep learning fraud prevention, graph network surveillance, and transparent SHAP explanations for institutional banking.
+              BankGuard AI — Banking Transaction Anomaly Detection & Explainable Risk Analysis System. Delivering real-time deep learning fraud prevention, graph network surveillance, and transparent SHAP explanations for modern banking.
             </p>
             <div className="flex items-center gap-2 text-[11px] font-mono text-sky-400 font-semibold">
               <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>

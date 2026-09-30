@@ -94,7 +94,7 @@ export default function ExplainableRiskEngine() {
           })}
         </div>
 
-        {/* Interactive Comparison: Black Box vs. Aegis XAI Engine */}
+        {/* Interactive Comparison: Black Box vs. BankGuard XAI Engine */}
         <div className="glass-card-3d p-8 rounded-3xl border border-slate-200 shadow-xl bg-white">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8 items-center">
             
@@ -124,11 +124,11 @@ export default function ExplainableRiskEngine() {
               </ul>
             </div>
 
-            {/* Aegis Explainable AI Approach */}
+            {/* BankGuard Explainable AI Approach */}
             <div className="p-6 rounded-3xl bg-sky-50 border border-sky-200">
               <div className="flex items-center gap-2 text-sky-800 font-extrabold text-sm mb-3">
                 <span className="w-2.5 h-2.5 rounded-full bg-sky-600"></span>
-                <span>AegisBank Explainable Risk AI</span>
+                <span>BankGuard AI Explainable Risk Engine</span>
               </div>
               <ul className="space-y-2.5 text-xs text-slate-800 font-medium">
                 <li className="flex items-start gap-2">
