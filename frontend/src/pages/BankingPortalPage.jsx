@@ -28,6 +28,8 @@ import {
   Send,
   KeyRound,
   Landmark,
+  PanelLeftClose,
+  PanelLeftOpen,
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 
@@ -59,6 +61,7 @@ export default function BankingPortalPage() {
   const { user, logout, navigateTo, apiFetch, updateUser, refreshProfile } = useAuth();
 
   const [activeTab, setActiveTab] = useState('dashboard');
+  const [sidebarOpen, setSidebarOpen] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
   const [txStatusFilter, setTxStatusFilter] = useState('ALL');
   const [selectedTxModal, setSelectedTxModal] = useState(null);
@@ -473,11 +476,19 @@ export default function BankingPortalPage() {
   const dist = summary?.risk_distribution || { normal_pct: 0, suspicious_pct: 0, high_risk_pct: 0 };
 
   return (
-    <div className="min-h-screen bg-[#F4F7FB] text-slate-800 flex font-sans">
-      {/* LEFT SIDEBAR */}
-      <aside className="w-64 bg-[#0A2540] text-white flex flex-col justify-between shrink-0 min-h-screen border-r border-[#13355b] z-30">
+    <div className="h-screen h-dvh overflow-hidden bg-[#F4F7FB] text-slate-800 flex font-sans">
+      {/* LEFT SIDEBAR (Fixed height, collapsible to icon rail) */}
+      <aside
+        className={`${
+          sidebarOpen ? 'w-64' : 'w-[74px]'
+        } bg-[#0A2540] text-white flex flex-col justify-between shrink-0 h-full overflow-y-auto overflow-x-hidden border-r border-[#13355b] transition-all duration-200 z-30`}
+      >
         <div>
-          <div className="p-5 border-b border-slate-700/50 flex items-center gap-3">
+          <div
+            className={`p-4 border-b border-slate-700/50 flex items-center ${
+              sidebarOpen ? 'gap-3 justify-start px-5' : 'justify-center'
+            }`}
+          >
             <div className="w-9 h-10 shrink-0">
               <svg viewBox="0 0 44 48" fill="none" aria-hidden="true" className="w-full h-full">
                 <path d="M22 2L4 8.5V21.5C4 32.5 11.5 42.5 22 46C32.5 42.5 40 32.5 40 21.5V8.5L22 2Z" fill="#0052CC" />
@@ -488,38 +499,48 @@ export default function BankingPortalPage() {
                 <path d="M15.5 23L22 16L28.5 19.5" stroke="#38BDF8" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
               </svg>
             </div>
-            <div>
-              <div className="text-lg font-extrabold tracking-tight text-white leading-tight">
-                BankGuard <span className="text-[#38BDF8]">AI</span>
+            {sidebarOpen && (
+              <div className="min-w-0">
+                <div className="text-lg font-extrabold tracking-tight text-white leading-tight truncate">
+                  BankGuard <span className="text-[#38BDF8]">AI</span>
+                </div>
+                <div className="text-[10px] text-slate-300 font-medium truncate">
+                  {isAdmin ? 'Risk Operations Console' : 'Personal & Business Vault'}
+                </div>
               </div>
-              <div className="text-[10px] text-slate-300 font-medium">
-                {isAdmin ? 'Risk Operations Console' : 'Personal & Business Vault'}
-              </div>
-            </div>
+            )}
           </div>
 
-          <nav aria-label="Portal navigation" className="p-3 space-y-1">
+          <nav aria-label="Portal navigation" className="p-2.5 space-y-1">
             <button
               type="button"
               onClick={() => setActiveTab('dashboard')}
-              className={`w-full flex items-center gap-3 px-4 py-2.5 rounded-xl text-xs sm:text-sm font-semibold transition-colors cursor-pointer ${
+              title="Dashboard"
+              aria-label="Dashboard"
+              className={`w-full flex items-center ${
+                sidebarOpen ? 'gap-3 px-4' : 'justify-center px-0'
+              } py-2.5 rounded-xl text-xs sm:text-sm font-semibold transition-colors cursor-pointer ${
                 effectiveTab === 'dashboard' ? 'bg-[#0052CC] text-white' : 'text-slate-300 hover:text-white hover:bg-slate-800/60'
               }`}
             >
-              <Activity className="w-4 h-4" />
-              <span>Dashboard</span>
+              <Activity className="w-4 h-4 shrink-0" />
+              {sidebarOpen && <span>Dashboard</span>}
             </button>
 
             {!isAdmin && (
               <button
                 type="button"
                 onClick={() => setActiveTab('transfer')}
-                className={`w-full flex items-center gap-3 px-4 py-2.5 rounded-xl text-xs sm:text-sm font-semibold transition-colors cursor-pointer ${
+                title="Send Money"
+                aria-label="Send Money"
+                className={`w-full flex items-center ${
+                  sidebarOpen ? 'gap-3 px-4' : 'justify-center px-0'
+                } py-2.5 rounded-xl text-xs sm:text-sm font-semibold transition-colors cursor-pointer ${
                   effectiveTab === 'transfer' ? 'bg-[#0052CC] text-white' : 'text-slate-300 hover:text-white hover:bg-slate-800/60'
                 }`}
               >
-                <Send className="w-4 h-4" />
-                <span>Send Money</span>
+                <Send className="w-4 h-4 shrink-0" />
+                {sidebarOpen && <span>Send Money</span>}
               </button>
             )}
 
@@ -527,36 +548,48 @@ export default function BankingPortalPage() {
               <button
                 type="button"
                 onClick={() => setActiveTab('users')}
-                className={`w-full flex items-center gap-3 px-4 py-2.5 rounded-xl text-xs sm:text-sm font-semibold transition-colors cursor-pointer ${
+                title="User Management"
+                aria-label="User Management"
+                className={`w-full flex items-center ${
+                  sidebarOpen ? 'gap-3 px-4' : 'justify-center px-0'
+                } py-2.5 rounded-xl text-xs sm:text-sm font-semibold transition-colors cursor-pointer ${
                   effectiveTab === 'users' ? 'bg-[#0052CC] text-white' : 'text-slate-300 hover:text-white hover:bg-slate-800/60'
                 }`}
               >
-                <Users className="w-4 h-4" />
-                <span>User Management</span>
+                <Users className="w-4 h-4 shrink-0" />
+                {sidebarOpen && <span>User Management</span>}
               </button>
             )}
 
             <button
               type="button"
               onClick={() => setActiveTab('transactions')}
-              className={`w-full flex items-center gap-3 px-4 py-2.5 rounded-xl text-xs sm:text-sm font-semibold transition-colors cursor-pointer ${
+              title={isAdmin ? 'All Transactions' : 'My Transactions'}
+              aria-label={isAdmin ? 'All Transactions' : 'My Transactions'}
+              className={`w-full flex items-center ${
+                sidebarOpen ? 'gap-3 px-4' : 'justify-center px-0'
+              } py-2.5 rounded-xl text-xs sm:text-sm font-semibold transition-colors cursor-pointer ${
                 effectiveTab === 'transactions' ? 'bg-[#0052CC] text-white' : 'text-slate-300 hover:text-white hover:bg-slate-800/60'
               }`}
             >
-              <CreditCard className="w-4 h-4" />
-              <span>{isAdmin ? 'All Transactions' : 'My Transactions'}</span>
+              <CreditCard className="w-4 h-4 shrink-0" />
+              {sidebarOpen && <span>{isAdmin ? 'All Transactions' : 'My Transactions'}</span>}
             </button>
 
             {isAdmin && (
               <button
                 type="button"
                 onClick={() => setActiveTab('analyze')}
-                className={`w-full flex items-center gap-3 px-4 py-2.5 rounded-xl text-xs sm:text-sm font-semibold transition-colors cursor-pointer ${
+                title="Analyze Transaction"
+                aria-label="Analyze Transaction"
+                className={`w-full flex items-center ${
+                  sidebarOpen ? 'gap-3 px-4' : 'justify-center px-0'
+                } py-2.5 rounded-xl text-xs sm:text-sm font-semibold transition-colors cursor-pointer ${
                   effectiveTab === 'analyze' ? 'bg-[#0052CC] text-white' : 'text-slate-300 hover:text-white hover:bg-slate-800/60'
                 }`}
               >
-                <Search className="w-4 h-4" />
-                <span>Analyze Transaction</span>
+                <Search className="w-4 h-4 shrink-0" />
+                {sidebarOpen && <span>Analyze Transaction</span>}
               </button>
             )}
 
@@ -564,12 +597,16 @@ export default function BankingPortalPage() {
               <button
                 type="button"
                 onClick={() => setActiveTab('risk-analysis')}
-                className={`w-full flex items-center gap-3 px-4 py-2.5 rounded-xl text-xs sm:text-sm font-semibold transition-colors cursor-pointer ${
+                title="Risk Analysis"
+                aria-label="Risk Analysis"
+                className={`w-full flex items-center ${
+                  sidebarOpen ? 'gap-3 px-4' : 'justify-center px-0'
+                } py-2.5 rounded-xl text-xs sm:text-sm font-semibold transition-colors cursor-pointer ${
                   effectiveTab === 'risk-analysis' ? 'bg-[#0052CC] text-white' : 'text-slate-300 hover:text-white hover:bg-slate-800/60'
                 }`}
               >
-                <ShieldAlert className="w-4 h-4" />
-                <span>Risk Analysis</span>
+                <ShieldAlert className="w-4 h-4 shrink-0" />
+                {sidebarOpen && <span>Risk Analysis</span>}
               </button>
             )}
 
@@ -579,42 +616,57 @@ export default function BankingPortalPage() {
                 setActiveTab('alerts');
                 markAllAlertsRead();
               }}
-              className={`w-full flex items-center justify-between px-4 py-2.5 rounded-xl text-xs sm:text-sm font-semibold transition-colors cursor-pointer ${
+              title={isAdmin ? 'Alerts & Investigations' : 'Alerts'}
+              aria-label={isAdmin ? 'Alerts & Investigations' : 'Alerts'}
+              className={`relative w-full flex items-center ${
+                sidebarOpen ? 'justify-between px-4' : 'justify-center px-0'
+              } py-2.5 rounded-xl text-xs sm:text-sm font-semibold transition-colors cursor-pointer ${
                 effectiveTab === 'alerts' ? 'bg-[#0052CC] text-white' : 'text-slate-300 hover:text-white hover:bg-slate-800/60'
               }`}
             >
               <div className="flex items-center gap-3">
-                <AlertTriangle className="w-4 h-4" />
-                <span>{isAdmin ? 'Alerts & Investigations' : 'Alerts'}</span>
+                <AlertTriangle className="w-4 h-4 shrink-0" />
+                {sidebarOpen && <span>{isAdmin ? 'Alerts & Investigations' : 'Alerts'}</span>}
               </div>
-              {unreadAlertsCount > 0 && (
-                <span className="px-1.5 py-0.5 rounded-full bg-rose-500 text-white text-[10px] font-bold">
-                  {unreadAlertsCount}
-                </span>
-              )}
+              {unreadAlertsCount > 0 &&
+                (sidebarOpen ? (
+                  <span className="px-1.5 py-0.5 rounded-full bg-rose-500 text-white text-[10px] font-bold">
+                    {unreadAlertsCount}
+                  </span>
+                ) : (
+                  <span className="absolute top-2 right-3.5 w-2 h-2 rounded-full bg-rose-500" />
+                ))}
             </button>
 
             <button
               type="button"
               onClick={() => setActiveTab('reports')}
-              className={`w-full flex items-center gap-3 px-4 py-2.5 rounded-xl text-xs sm:text-sm font-semibold transition-colors cursor-pointer ${
+              title={isAdmin ? 'Analytics & Reports' : 'My Reports'}
+              aria-label={isAdmin ? 'Analytics & Reports' : 'My Reports'}
+              className={`w-full flex items-center ${
+                sidebarOpen ? 'gap-3 px-4' : 'justify-center px-0'
+              } py-2.5 rounded-xl text-xs sm:text-sm font-semibold transition-colors cursor-pointer ${
                 effectiveTab === 'reports' ? 'bg-[#0052CC] text-white' : 'text-slate-300 hover:text-white hover:bg-slate-800/60'
               }`}
             >
-              <FileText className="w-4 h-4" />
-              <span>{isAdmin ? 'Analytics & Reports' : 'My Reports'}</span>
+              <FileText className="w-4 h-4 shrink-0" />
+              {sidebarOpen && <span>{isAdmin ? 'Analytics & Reports' : 'My Reports'}</span>}
             </button>
 
             {isAdmin && (
               <button
                 type="button"
                 onClick={() => setActiveTab('ml-models')}
-                className={`w-full flex items-center gap-3 px-4 py-2.5 rounded-xl text-xs sm:text-sm font-semibold transition-colors cursor-pointer ${
+                title="ML Model Performance"
+                aria-label="ML Model Performance"
+                className={`w-full flex items-center ${
+                  sidebarOpen ? 'gap-3 px-4' : 'justify-center px-0'
+                } py-2.5 rounded-xl text-xs sm:text-sm font-semibold transition-colors cursor-pointer ${
                   effectiveTab === 'ml-models' ? 'bg-[#0052CC] text-white' : 'text-slate-300 hover:text-white hover:bg-slate-800/60'
                 }`}
               >
-                <Cpu className="w-4 h-4" />
-                <span>ML Model Performance</span>
+                <Cpu className="w-4 h-4 shrink-0" />
+                {sidebarOpen && <span>ML Model Performance</span>}
               </button>
             )}
 
@@ -622,75 +674,114 @@ export default function BankingPortalPage() {
               <button
                 type="button"
                 onClick={() => setActiveTab('audit-logs')}
-                className={`w-full flex items-center gap-3 px-4 py-2.5 rounded-xl text-xs sm:text-sm font-semibold transition-colors cursor-pointer ${
+                title="Audit Logs"
+                aria-label="Audit Logs"
+                className={`w-full flex items-center ${
+                  sidebarOpen ? 'gap-3 px-4' : 'justify-center px-0'
+                } py-2.5 rounded-xl text-xs sm:text-sm font-semibold transition-colors cursor-pointer ${
                   effectiveTab === 'audit-logs' ? 'bg-[#0052CC] text-white' : 'text-slate-300 hover:text-white hover:bg-slate-800/60'
                 }`}
               >
-                <Layers className="w-4 h-4" />
-                <span>Audit Logs</span>
+                <Layers className="w-4 h-4 shrink-0" />
+                {sidebarOpen && <span>Audit Logs</span>}
               </button>
             )}
 
             <button
               type="button"
               onClick={() => setActiveTab('profile')}
-              className={`w-full flex items-center gap-3 px-4 py-2.5 rounded-xl text-xs sm:text-sm font-semibold transition-colors cursor-pointer ${
+              title="Profile"
+              aria-label="Profile"
+              className={`w-full flex items-center ${
+                sidebarOpen ? 'gap-3 px-4' : 'justify-center px-0'
+              } py-2.5 rounded-xl text-xs sm:text-sm font-semibold transition-colors cursor-pointer ${
                 effectiveTab === 'profile' ? 'bg-[#0052CC] text-white' : 'text-slate-300 hover:text-white hover:bg-slate-800/60'
               }`}
             >
-              <UserIcon className="w-4 h-4" />
-              <span>Profile</span>
+              <UserIcon className="w-4 h-4 shrink-0" />
+              {sidebarOpen && <span>Profile</span>}
             </button>
 
             <button
               type="button"
               onClick={() => setActiveTab('settings')}
-              className={`w-full flex items-center gap-3 px-4 py-2.5 rounded-xl text-xs sm:text-sm font-semibold transition-colors cursor-pointer ${
+              title="Settings"
+              aria-label="Settings"
+              className={`w-full flex items-center ${
+                sidebarOpen ? 'gap-3 px-4' : 'justify-center px-0'
+              } py-2.5 rounded-xl text-xs sm:text-sm font-semibold transition-colors cursor-pointer ${
                 effectiveTab === 'settings' ? 'bg-[#0052CC] text-white' : 'text-slate-300 hover:text-white hover:bg-slate-800/60'
               }`}
             >
-              <Settings className="w-4 h-4" />
-              <span>Settings</span>
+              <Settings className="w-4 h-4 shrink-0" />
+              {sidebarOpen && <span>Settings</span>}
             </button>
 
             <div className="pt-2 border-t border-slate-700/50 mt-2">
               <button
                 type="button"
+                title="Logout"
+                aria-label="Logout"
                 onClick={() => {
                   logout();
                   navigateTo('signin');
                 }}
-                className="w-full flex items-center gap-3 px-4 py-2 rounded-xl text-xs sm:text-sm font-semibold text-rose-300 hover:text-rose-200 hover:bg-rose-950/40 transition-colors cursor-pointer"
+                className={`w-full flex items-center ${
+                  sidebarOpen ? 'gap-3 px-4' : 'justify-center px-0'
+                } py-2 rounded-xl text-xs sm:text-sm font-semibold text-rose-300 hover:text-rose-200 hover:bg-rose-950/40 transition-colors cursor-pointer`}
               >
-                <LogOut className="w-4 h-4" />
-                <span>Logout</span>
+                <LogOut className="w-4 h-4 shrink-0" />
+                {sidebarOpen && <span>Logout</span>}
               </button>
             </div>
           </nav>
         </div>
 
-        <div className="p-4 m-3 rounded-xl bg-slate-900/60 border border-slate-700/60 text-xs">
-          <div className="text-[10px] font-mono uppercase text-slate-400">Account ID</div>
-          <div className="font-mono font-bold text-sky-300 mt-0.5">{user.account_number || 'BG-0000-0000'}</div>
-          <div className="text-[11px] text-slate-300 mt-1">{user.account_tier || 'Standard'}</div>
-        </div>
+        {sidebarOpen ? (
+          <div className="p-4 m-3 rounded-xl bg-slate-900/60 border border-slate-700/60 text-xs">
+            <div className="text-[10px] font-mono uppercase text-slate-400">Account ID</div>
+            <div className="font-mono font-bold text-sky-300 mt-0.5 truncate">
+              {user.account_number || 'BG-0000-0000'}
+            </div>
+            <div className="text-[11px] text-slate-300 mt-1 truncate">{user.account_tier || 'Standard'}</div>
+          </div>
+        ) : (
+          <div
+            title={`Account: ${user.account_number || 'BG-0000-0000'}`}
+            className="mx-auto mb-3 w-10 h-10 rounded-xl bg-slate-900/70 border border-slate-700/60 flex items-center justify-center text-sky-300"
+          >
+            <ShieldCheck className="w-4 h-4" />
+          </div>
+        )}
       </aside>
 
-      {/* MAIN CONTENT */}
-      <div className="flex-1 flex flex-col min-w-0 overflow-x-hidden">
-        {/* TOP HEADER */}
-        <header className="bg-white border-b border-slate-200 py-3.5 px-6 sm:px-8 flex items-center justify-between sticky top-0 z-20 gap-4">
-          <div className="max-w-md w-full relative">
-            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-400">
-              <Search className="w-4 h-4" />
+      {/* MAIN CONTENT COLUMN (Fixed height, internal scroll only) */}
+      <div className="flex-1 flex flex-col min-w-0 h-full overflow-hidden">
+        {/* TOP HEADER (Pinned) */}
+        <header className="shrink-0 bg-white border-b border-slate-200 py-3.5 px-4 sm:px-8 flex items-center justify-between z-20 gap-3">
+          <div className="flex items-center gap-3 flex-1 min-w-0">
+            <button
+              type="button"
+              onClick={() => setSidebarOpen((prev) => !prev)}
+              aria-label={sidebarOpen ? 'Collapse sidebar' : 'Expand sidebar'}
+              title={sidebarOpen ? 'Collapse sidebar' : 'Expand sidebar'}
+              className="w-9 h-9 shrink-0 flex items-center justify-center rounded-xl border border-slate-200 bg-slate-50 hover:bg-slate-100 text-slate-700 cursor-pointer"
+            >
+              {sidebarOpen ? <PanelLeftClose className="w-4 h-4" /> : <PanelLeftOpen className="w-4 h-4" />}
+            </button>
+
+            <div className="max-w-md w-full relative">
+              <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-400">
+                <Search className="w-4 h-4" />
+              </div>
+              <input
+                type="search"
+                placeholder="Search by Tx ID, recipient, sender, or city..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="w-full pl-9 pr-4 py-2 rounded-xl bg-slate-50 border border-slate-200 text-xs sm:text-sm text-slate-900 placeholder:text-slate-400"
+              />
             </div>
-            <input
-              type="search"
-              placeholder="Search by Tx ID, recipient, sender, or city..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full pl-9 pr-4 py-2 rounded-xl bg-slate-50 border border-slate-200 text-xs sm:text-sm text-slate-900 placeholder:text-slate-400"
-            />
           </div>
 
           <div className="flex items-center gap-3">
@@ -824,11 +915,13 @@ export default function BankingPortalPage() {
           </div>
         </header>
 
-        {dataError && (
-          <div className="mx-6 sm:mx-8 mt-4 p-3 rounded-xl bg-amber-50 border border-amber-200 text-amber-900 text-xs font-medium">
-            {dataError}
-          </div>
-        )}
+        {/* Scrollable Content Viewport */}
+        <div className="flex-1 overflow-y-auto min-h-0">
+          {dataError && (
+            <div className="mx-6 sm:mx-8 mt-4 p-3 rounded-xl bg-amber-50 border border-amber-200 text-amber-900 text-xs font-medium">
+              {dataError}
+            </div>
+          )}
 
         {/* ===================================================================== */}
         {/* TAB: DASHBOARD (100% LIVE DATABASE METRICS) */}
@@ -2029,6 +2122,7 @@ export default function BankingPortalPage() {
             </div>
           </main>
         )}
+        </div>
       </div>
 
       {/* ===================================================================== */}
