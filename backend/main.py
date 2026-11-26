@@ -1,10 +1,12 @@
+import io
 import json
 import random
 import string
 from datetime import datetime, timedelta
 from typing import Optional
 
-from fastapi import FastAPI, Depends, HTTPException, status
+import pandas as pd
+from fastapi import FastAPI, Depends, HTTPException, status, UploadFile, File, Form, Response
 from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy import text, inspect
 from sqlalchemy.orm import Session
@@ -13,6 +15,7 @@ from database import Base, engine, get_db, init_engine
 import models
 import schemas
 import auth
+import ml_engine
 
 app = FastAPI(
     title="Bank Guard AI - Transaction Anomaly Detection & Banking API",
@@ -43,6 +46,15 @@ def require_current_user(user: Optional[models.User] = Depends(auth.get_current_
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Authentication required. Please sign in.",
+        )
+    return user
+
+
+def require_admin_user(user: models.User = Depends(require_current_user)) -> models.User:
+    if not is_admin_user(user):
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Administrator or Risk Analyst privileges required.",
         )
     return user
 
@@ -668,6 +680,47 @@ def evaluate_transaction_risk(
         "positive": dev_impact > 0,
     })
 
+    # If an active trained ML/DL ensemble exists, score dynamically with Hybrid Ensemble + TreeSHAP
+    if high_risk_geo:
+        geo_dist = 1850.0
+    elif home_city.split(",")[0].strip() not in loc_lower:
+        geo_dist = 920.0
+    else:
+        geo_dist = 12.0
+
+    dev_entropy = 2.0 if ("unknown" in dev_lower or "tor" in dev_lower) else 0.0
+    ch_map = {"UPI": 0, "NEFT": 1, "IMPS": 2, "RTGS": 3, "POS": 4, "ATM": 5}
+    channel_code = float(ch_map.get(ch_upper, 2))
+    acct_age_months = 24.0
+    if sender_user and sender_user.created_at:
+        created_naive = sender_user.created_at.replace(tzinfo=None)
+        days_old = max(1, (datetime.utcnow() - created_naive).days)
+        acct_age_months = max(1.0, min(120.0, round(days_old / 30.0, 1)))
+
+    eff_velocity = max(velocity_1h, 6 if risky_rec else velocity_1h)
+    eff_new_ben = 1.0 if (is_new_recipient or risky_rec) else 0.0
+
+    ml_result = ml_engine.explain_canonical_transaction({
+        "amount": float(amount),
+        "velocity_1h": float(eff_velocity),
+        "geo_distance_km": float(geo_dist),
+        "hour_of_day": float(datetime.utcnow().hour),
+        "device_entropy": float(dev_entropy),
+        "is_new_beneficiary": float(eff_new_ben),
+        "account_age_months": float(acct_age_months),
+        "channel_risk_code": float(channel_code),
+    })
+    if ml_result is not None:
+        blended_factors = list(factors) if factors else [ml_result["reasons"]]
+        for cf in ml_result.get("counterfactuals", []):
+            blended_factors.append(cf)
+        return (
+            ml_result["risk_score"],
+            ml_result["decision"],
+            "; ".join(blended_factors),
+            ml_result["shap_factors"],
+        )
+
     raw_score = base_score + amt_impact + vel_impact + geo_impact + rec_impact + dev_impact
     risk_score = round(min(99.0, max(2.0, raw_score)), 1)
 
@@ -1065,3 +1118,269 @@ def get_security_audits(
     if user and not is_admin_user(user):
         query = query.filter(models.SecurityAudit.user_id == user.id)
     return query.order_by(models.SecurityAudit.id.desc()).limit(limit).all()
+
+
+# ================= ADMIN ML MODEL TRAINING & TESTING LAB =================
+
+def _read_csv_upload(file_bytes: bytes) -> pd.DataFrame:
+    if not file_bytes:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Uploaded CSV file is empty.")
+    try:
+        return pd.read_csv(io.BytesIO(file_bytes))
+    except Exception as exc:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"Failed to parse CSV file: {str(exc)}",
+        )
+
+
+@app.get("/api/ml/dataset/sample-csv")
+def download_sample_dataset_csv(
+    rows: int = 3000,
+    fraud_ratio: float = 0.06,
+    admin: models.User = Depends(require_admin_user),
+):
+    safe_rows = max(200, min(20000, rows))
+    safe_ratio = max(0.01, min(0.45, fraud_ratio))
+    df = ml_engine.generate_indian_banking_dataset(n_rows=safe_rows, fraud_ratio=safe_ratio)
+    csv_data = df.to_csv(index=False)
+    return Response(
+        content=csv_data,
+        media_type="text/csv",
+        headers={
+            "Content-Disposition": f'attachment; filename="bankguard_indian_banking_{safe_rows}.csv"'
+        },
+    )
+
+
+@app.post("/api/ml/dataset/inspect")
+async def inspect_dataset_endpoint(
+    file: Optional[UploadFile] = File(None),
+    use_synthetic: bool = Form(False),
+    synthetic_rows: int = Form(4000),
+    fraud_ratio: float = Form(0.06),
+    admin: models.User = Depends(require_admin_user),
+):
+    if use_synthetic or file is None:
+        safe_rows = max(300, min(25000, synthetic_rows))
+        safe_ratio = max(0.01, min(0.45, fraud_ratio))
+        df = ml_engine.generate_indian_banking_dataset(n_rows=safe_rows, fraud_ratio=safe_ratio)
+        dataset_name = f"bankguard_india_synthetic_{safe_rows}.csv"
+    else:
+        raw = await file.read()
+        df = _read_csv_upload(raw)
+        dataset_name = file.filename or "uploaded_dataset.csv"
+
+    report = ml_engine.inspect_dataframe(df)
+    report["dataset_name"] = dataset_name
+    return report
+
+
+@app.post("/api/ml/train")
+async def train_ml_models_endpoint(
+    file: Optional[UploadFile] = File(None),
+    use_synthetic: bool = Form(False),
+    synthetic_rows: int = Form(4000),
+    fraud_ratio: float = Form(0.06),
+    target_col: Optional[str] = Form(None),
+    models_json: str = Form('["xgboost","lightgbm","isolation_forest","autoencoder"]'),
+    use_smote: bool = Form(True),
+    test_size: float = Form(0.2),
+    activate: bool = Form(True),
+    dataset_name: Optional[str] = Form(None),
+    admin: models.User = Depends(require_admin_user),
+    db: Session = Depends(get_db),
+):
+    if use_synthetic or file is None:
+        safe_rows = max(300, min(25000, synthetic_rows))
+        safe_ratio = max(0.01, min(0.45, fraud_ratio))
+        df = ml_engine.generate_indian_banking_dataset(n_rows=safe_rows, fraud_ratio=safe_ratio)
+        resolved_name = dataset_name or f"bankguard_india_synthetic_{safe_rows}.csv"
+    else:
+        raw = await file.read()
+        df = _read_csv_upload(raw)
+        resolved_name = dataset_name or file.filename or "uploaded_dataset.csv"
+
+    try:
+        selected_models = json.loads(models_json)
+        if not isinstance(selected_models, list) or not selected_models:
+            selected_models = ["xgboost", "lightgbm"]
+    except Exception:
+        selected_models = ["xgboost", "lightgbm", "isolation_forest", "autoencoder"]
+
+    safe_split = max(0.1, min(0.4, float(test_size)))
+
+    try:
+        metadata = ml_engine.train_pipeline(
+            df=df,
+            target_col=target_col or None,
+            selected_models=selected_models,
+            use_smote=bool(use_smote),
+            test_size=safe_split,
+            dataset_name=resolved_name,
+            activate=bool(activate),
+        )
+    except ValueError as ve:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(ve))
+    except Exception as exc:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Model training pipeline error: {str(exc)}",
+        )
+
+    db.add(
+        models.SecurityAudit(
+            user_id=admin.id,
+            action=f"ML_MODEL_TRAINED:{metadata['version_id']} ({resolved_name})",
+            ip_address="127.0.0.1",
+            status="SUCCESS",
+        )
+    )
+    db.commit()
+    return metadata
+
+
+@app.get("/api/ml/models")
+def list_ml_models_endpoint(admin: models.User = Depends(require_admin_user)):
+    return ml_engine.list_model_versions()
+
+
+@app.post("/api/ml/models/{version_id}/activate")
+def activate_ml_model_endpoint(
+    version_id: str,
+    admin: models.User = Depends(require_admin_user),
+    db: Session = Depends(get_db),
+):
+    try:
+        updated = ml_engine.set_active_version(version_id)
+    except FileNotFoundError as fnf:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(fnf))
+
+    db.add(
+        models.SecurityAudit(
+            user_id=admin.id,
+            action=f"ML_MODEL_ACTIVATED:{version_id}",
+            ip_address="127.0.0.1",
+            status="SUCCESS",
+        )
+    )
+    db.commit()
+    return updated
+
+
+@app.post("/api/ml/test/batch-csv")
+async def test_batch_csv_endpoint(
+    file: UploadFile = File(...),
+    threshold: float = Form(0.5),
+    admin: models.User = Depends(require_admin_user),
+):
+    loaded = ml_engine.load_active_bundle()
+    if loaded is None:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="No active ML model trained yet. Train a model in Model Training Studio first.",
+        )
+
+    bundle, ae_model, active_meta = loaded
+    raw = await file.read()
+    df_raw = _read_csv_upload(raw)
+    if len(df_raw) < 1:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="CSV has 0 rows.")
+
+    expected_cols = bundle["feature_names"]
+    for col in expected_cols:
+        if col not in df_raw.columns:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail=f"CSV schema mismatch: missing feature column '{col}' expected by active model {active_meta['version_id']}.",
+            )
+
+    y_true = None
+    try:
+        _, y_parsed, _, _, _ = ml_engine._extract_features_and_target(df_raw)
+        y_true = y_parsed
+    except ValueError:
+        y_true = None
+
+    probs, model_probs, _ = ml_engine.score_dataframe(bundle, ae_model, df_raw)
+    safe_thresh = max(0.05, min(0.95, float(threshold)))
+
+    metrics = None
+    if y_true is not None and len(set(y_true)) >= 2:
+        metrics = ml_engine._compute_metrics(y_true, probs, latency_ms=1.2, threshold=safe_thresh)
+
+    scored_df = df_raw.copy()
+    scored_df["predicted_risk_score"] = (probs * 100.0).round(2)
+    scored_df["predicted_flag"] = [
+        "BLOCKED_FROZEN" if p * 100.0 >= 75.0 else ("STEP_UP_MFA" if p >= safe_thresh else "AUTO_CLEARED")
+        for p in probs
+    ]
+
+    flagged_count = int((probs >= safe_thresh).sum())
+    blocked_count = int((probs * 100.0 >= 75.0).sum())
+
+    preview_df = scored_df.sort_values(by="predicted_risk_score", ascending=False).head(40)
+    preview_rows = json.loads(preview_df.to_json(orient="records"))
+
+    return {
+        "version_id": active_meta["version_id"],
+        "filename": file.filename or "test_batch.csv",
+        "threshold_used": safe_thresh,
+        "total_rows": int(len(scored_df)),
+        "flagged_count": flagged_count,
+        "blocked_count": blocked_count,
+        "anomaly_rate_pct": round((flagged_count / len(scored_df)) * 100.0, 2),
+        "has_labels": bool(metrics is not None),
+        "metrics": metrics,
+        "preview_columns": list(preview_df.columns)[:10],
+        "preview_rows": preview_rows,
+        "scored_csv": scored_df.to_csv(index=False),
+    }
+
+
+@app.post("/api/ml/test/adversarial")
+def test_adversarial_suite_endpoint(
+    admin: models.User = Depends(require_admin_user),
+):
+    loaded = ml_engine.load_active_bundle()
+    version_id = loaded[2].get("version_id") if loaded else None
+    try:
+        res = ml_engine.run_adversarial_suite()
+        res["version_id"] = version_id
+        return res
+    except ValueError as ve:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(ve))
+
+
+@app.get("/api/ml/test/drift")
+def test_data_drift_endpoint(
+    admin: models.User = Depends(require_admin_user),
+    db: Session = Depends(get_db),
+):
+    loaded = ml_engine.load_active_bundle()
+    if loaded is None:
+        return {
+            "has_active_model": False,
+            "overall_psi": 0.0,
+            "overall_status": "NO_MODEL",
+            "features": [],
+            "live_sample_count": 0,
+        }
+
+    bundle, _, active_meta = loaded
+    recent_txs = db.query(models.Transaction).order_by(models.Transaction.id.desc()).limit(250).all()
+    ch_map = {"UPI": 0, "NEFT": 1, "IMPS": 2, "RTGS": 3, "POS": 4, "ATM": 5}
+    live_rows = [
+        {
+            "amount": float(tx.amount),
+            "channel_risk_code": float(ch_map.get((tx.channel or "NEFT").upper(), 2)),
+            "hour_of_day": float(tx.created_at.hour if tx.created_at else 12),
+        }
+        for tx in recent_txs
+    ]
+    live_df = pd.DataFrame(live_rows) if live_rows else pd.DataFrame(columns=["amount", "channel_risk_code", "hour_of_day"])
+    drift = ml_engine.compute_psi_drift(bundle.get("train_histograms", {}), live_df)
+    drift["has_active_model"] = True
+    drift["version_id"] = active_meta["version_id"]
+    drift["live_sample_count"] = len(recent_txs)
+    return drift

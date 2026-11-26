@@ -30,8 +30,11 @@ import {
   Landmark,
   PanelLeftClose,
   PanelLeftOpen,
+  FlaskConical,
 } from 'lucide-react';
-import { useAuth } from '../context/AuthContext';
+import { useAuth, API_BASE_URL } from '../context/AuthContext';
+import AdminModelTrainingTab from '../components/AdminModelTrainingTab';
+import AdminModelTestingTab from '../components/AdminModelTestingTab';
 
 function formatMoney(amount, currency = 'INR') {
   const symbol = currency === 'USD' ? '$' : currency === 'EUR' ? '€' : '₹';
@@ -58,7 +61,7 @@ function riskBadgeStyle(decision) {
 }
 
 export default function BankingPortalPage() {
-  const { user, logout, navigateTo, apiFetch, updateUser, refreshProfile } = useAuth();
+  const { user, token, logout, navigateTo, apiFetch, updateUser, refreshProfile } = useAuth();
 
   const [activeTab, setActiveTab] = useState('dashboard');
   const [sidebarOpen, setSidebarOpen] = useState(true);
@@ -136,7 +139,7 @@ export default function BankingPortalPage() {
   ].includes(normalizedRole);
 
   const effectiveTab =
-    !isAdmin && ['users', 'ml-models', 'audit-logs', 'analyze', 'risk-analysis'].includes(activeTab)
+    !isAdmin && ['users', 'ml-training', 'ml-models', 'audit-logs', 'analyze', 'risk-analysis'].includes(activeTab)
       ? 'dashboard'
       : activeTab;
 
@@ -656,17 +659,34 @@ export default function BankingPortalPage() {
             {isAdmin && (
               <button
                 type="button"
+                onClick={() => setActiveTab('ml-training')}
+                title="Model Training Studio"
+                aria-label="Model Training Studio"
+                className={`w-full flex items-center ${
+                  sidebarOpen ? 'gap-3 px-4' : 'justify-center px-0'
+                } py-2.5 rounded-xl text-xs sm:text-sm font-semibold transition-colors cursor-pointer ${
+                  effectiveTab === 'ml-training' ? 'bg-[#0052CC] text-white' : 'text-slate-300 hover:text-white hover:bg-slate-800/60'
+                }`}
+              >
+                <Cpu className="w-4 h-4 shrink-0" />
+                {sidebarOpen && <span>Model Training</span>}
+              </button>
+            )}
+
+            {isAdmin && (
+              <button
+                type="button"
                 onClick={() => setActiveTab('ml-models')}
-                title="ML Model Performance"
-                aria-label="ML Model Performance"
+                title="Model Testing Lab"
+                aria-label="Model Testing Lab"
                 className={`w-full flex items-center ${
                   sidebarOpen ? 'gap-3 px-4' : 'justify-center px-0'
                 } py-2.5 rounded-xl text-xs sm:text-sm font-semibold transition-colors cursor-pointer ${
                   effectiveTab === 'ml-models' ? 'bg-[#0052CC] text-white' : 'text-slate-300 hover:text-white hover:bg-slate-800/60'
                 }`}
               >
-                <Cpu className="w-4 h-4 shrink-0" />
-                {sidebarOpen && <span>ML Model Performance</span>}
+                <FlaskConical className="w-4 h-4 shrink-0" />
+                {sidebarOpen && <span>Model Testing Lab</span>}
               </button>
             )}
 
@@ -2075,9 +2095,35 @@ export default function BankingPortalPage() {
         )}
 
         {/* ===================================================================== */}
-        {/* TAB: REPORTS / SETTINGS / ADMIN ML-MODELS & RISK-ANALYSIS */}
+        {/* TAB: ADMIN MODEL TRAINING STUDIO */}
         {/* ===================================================================== */}
-        {['reports', 'settings', 'ml-models', 'risk-analysis'].includes(effectiveTab) && (
+        {effectiveTab === 'ml-training' && isAdmin && (
+          <main className="p-6 sm:p-8">
+            <AdminModelTrainingTab
+              token={token}
+              API_BASE_URL={API_BASE_URL}
+              onJumpToTesting={() => setActiveTab('ml-models')}
+            />
+          </main>
+        )}
+
+        {/* ===================================================================== */}
+        {/* TAB: ADMIN MULTI-MODE MODEL TESTING LAB */}
+        {/* ===================================================================== */}
+        {effectiveTab === 'ml-models' && isAdmin && (
+          <main className="p-6 sm:p-8">
+            <AdminModelTestingTab
+              token={token}
+              API_BASE_URL={API_BASE_URL}
+              onJumpToTraining={() => setActiveTab('ml-training')}
+            />
+          </main>
+        )}
+
+        {/* ===================================================================== */}
+        {/* TAB: REPORTS / SETTINGS / ADMIN RISK-ANALYSIS */}
+        {/* ===================================================================== */}
+        {['reports', 'settings', 'risk-analysis'].includes(effectiveTab) && (
           <main className="p-6 sm:p-8 space-y-6">
             <div className="flex items-center justify-between">
               <div>
