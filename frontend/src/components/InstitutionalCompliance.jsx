@@ -1,72 +1,64 @@
 import React from 'react';
-import { ShieldCheck, CheckCircle2, Award } from 'lucide-react';
+import { Award, CheckCircle2 } from 'lucide-react';
 
 const COMPLIANCE_ITEMS = [
   {
-    title: 'GDPR Article 22 & "Right to Explanation"',
+    title: 'GDPR Article 22 (Right to Explanation)',
     code: 'EU-GDPR-22',
-    description: 'Enforces human-in-the-loop oversight and delivers clear SHAP feature breakdowns to account holders whenever an automated adverse decision occurs.'
+    description:
+      'Delivers human-readable SHAP feature breakdowns and counterfactual recourse whenever a transaction is held or blocked.',
   },
   {
-    title: 'Basel III & IV Capital Risk Standards',
+    title: 'Basel III Operational Risk Traceability',
     code: 'BCBS-239',
-    description: 'Complies with internal ratings-based (IRB) capital requirements, maintaining complete traceability and reproducibility for operational risk calculation.'
+    description:
+      'Maintains structured transaction records, risk scores, and analyst dispositions for reproducible risk auditing.',
   },
   {
-    title: 'PCI-DSS Level 1 & Tokenization',
-    code: 'PCI-DSS-v4.0',
-    description: 'Zero raw PAN storage. All card and account numbers are tokenized with format-preserving encryption (FPE) before entering ML ingestion.'
+    title: 'Cryptographic Auth & Audit Trails',
+    code: 'JWT + BCRYPT',
+    description:
+      'Uses salted Bcrypt password hashing, signed JWT sessions, and append-only security audit event tracking in PostgreSQL.',
   },
   {
-    title: 'SOC 2 Type II & ISO 27001 Certified',
-    code: 'AICPA-SOC2',
-    description: 'Strict end-to-end access isolation, automated continuous security scanning, and cryptographic tamper-evident event streaming.'
-  }
+    title: 'Role-Isolated Access Control',
+    code: 'RBAC-GUARD',
+    description:
+      'Separates customer self-service vault views from analyst fraud investigation, model monitoring, and database configuration.',
+  },
 ];
 
 export default function InstitutionalCompliance() {
   return (
-    <section className="py-20 relative bg-white border-t border-slate-100">
+    <section id="compliance" className="py-16 sm:py-20 bg-white">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        
-        {/* Section Header */}
-        <div className="text-center max-w-3xl mx-auto mb-16">
-          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-50 border border-emerald-200 text-xs font-mono font-bold text-emerald-800 mb-3">
-            <Award className="w-3.5 h-3.5" />
-            <span>Bank-Grade Governance</span>
+        <div className="max-w-3xl mb-12">
+          <div className="inline-flex items-center gap-2 text-emerald-700 font-mono text-xs font-bold uppercase tracking-wider mb-2">
+            <Award className="w-4 h-4" aria-hidden="true" />
+            <span>Governance &amp; Security</span>
           </div>
-          <h2 className="text-3xl sm:text-5xl font-extrabold text-slate-900 tracking-tight">
-            Institutional Regulatory Compliance
+          <h2 className="text-2xl sm:text-4xl font-extrabold text-[#0A2540] tracking-tight">
+            Built for Regulatory Transparency &amp; Auditability
           </h2>
           <p className="text-slate-600 text-sm sm:text-base mt-2">
-            Built from the ground up to satisfy the strictest global financial regulators, internal model governance boards, and external auditors.
+            Designed around banking governance principles so automated risk controls remain accountable and reviewable.
           </p>
         </div>
 
-        {/* 4 Compliance Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-12">
-          {COMPLIANCE_ITEMS.map((item, idx) => (
-            <div
-              key={idx}
-              className="glass-card-3d p-6 rounded-3xl border border-slate-200 hover:border-emerald-400 transition-all group bg-white shadow-md"
-            >
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          {COMPLIANCE_ITEMS.map((item) => (
+            <div key={item.code} className="bank-surface rounded-2xl p-6">
               <div className="flex items-center justify-between mb-3">
-                <span className="text-[11px] font-mono px-2.5 py-1 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-800 font-bold">
+                <span className="text-[11px] font-mono px-2.5 py-1 rounded-lg bg-emerald-50 border border-emerald-200 text-emerald-800 font-bold">
                   {item.code}
                 </span>
-                <CheckCircle2 className="w-5 h-5 text-emerald-600" />
+                <CheckCircle2 className="w-5 h-5 text-emerald-600" aria-hidden="true" />
               </div>
-
-              <h3 className="text-base font-extrabold text-slate-900 mb-2 group-hover:text-emerald-700 transition-colors">
-                {item.title}
-              </h3>
-              <p className="text-xs text-slate-500 leading-relaxed">
-                {item.description}
-              </p>
+              <h3 className="text-base font-bold text-[#0A2540] mb-2">{item.title}</h3>
+              <p className="text-xs text-slate-600 leading-relaxed">{item.description}</p>
             </div>
           ))}
         </div>
-
       </div>
     </section>
   );

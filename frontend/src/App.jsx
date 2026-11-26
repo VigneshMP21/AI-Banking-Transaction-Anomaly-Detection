@@ -34,16 +34,16 @@ class ErrorBoundary extends Component {
     if (this.state.hasError) {
       return (
         <div className="min-h-screen bg-slate-50 flex items-center justify-center p-6 text-center">
-          <div className="max-w-md w-full bg-white rounded-3xl p-8 border border-slate-200 shadow-xl">
-            <div className="w-12 h-12 rounded-2xl bg-rose-50 text-rose-600 flex items-center justify-center mx-auto mb-4 font-bold text-xl">
+          <div className="max-w-md w-full bg-white rounded-2xl p-8 border border-slate-200 shadow-lg">
+            <div className="w-12 h-12 rounded-xl bg-rose-50 text-rose-600 flex items-center justify-center mx-auto mb-4 font-bold text-xl">
               !
             </div>
-            <h2 className="text-xl font-bold text-slate-900 mb-2">Something went wrong</h2>
+            <h1 className="text-xl font-bold text-slate-900 mb-2">Something went wrong</h1>
             <p className="text-xs text-slate-500 mb-6">{this.state.error?.message || 'Failed to render section.'}</p>
             <button
               type="button"
               onClick={() => window.location.reload()}
-              className="w-full py-3 rounded-xl bg-sky-600 text-white font-bold text-xs"
+              className="w-full py-3 rounded-lg bg-[#0052CC] text-white font-semibold text-xs cursor-pointer"
             >
               Reload Page
             </button>
@@ -73,7 +73,6 @@ function AppContent() {
     }
   };
 
-  // Standalone Separate Page Routing
   if (currentPage === 'signin' || currentPage === 'login') {
     return <LoginPage />;
   }
@@ -90,14 +89,20 @@ function AppContent() {
     return <DbConfigPage />;
   }
 
-  // Default Landing Page
   return (
-    <div className="min-h-screen bg-white text-slate-900 selection:bg-sky-500/20 selection:text-sky-900">
+    <div className="min-h-screen bg-white text-slate-900 selection:bg-sky-500/15 selection:text-sky-950">
+      <a href="#main-content" className="skip-link">
+        Skip to main content
+      </a>
       <Navbar />
-      <main className="bg-white">
+      <main id="main-content" className="bg-white">
         <Hero />
-        <LiveTransactionStream onSelectTx={handleSelectTx} />
-        <InteractiveAnomalySandbox initialTx={selectedTx} />
+        <LiveTransactionStream onSelectTx={handleSelectTx} activeTxId={selectedTx?.id} />
+        <InteractiveAnomalySandbox
+          key={selectedTx?.id || 'default'}
+          initialTx={selectedTx}
+          onClearInspectedTx={() => setSelectedTx(null)}
+        />
         <ExplainableRiskEngine />
         <ArchitecturePipeline />
         <ModelBenchmarking />

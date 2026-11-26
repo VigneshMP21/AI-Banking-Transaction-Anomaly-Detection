@@ -13,8 +13,17 @@ const INITIAL_TRANSACTIONS = [
     currency: '$',
     riskScore: 89,
     status: 'CRITICAL',
-    trigger: 'Offshore high-velocity wire anomaly + Unseen beneficiary + Layering pattern',
-    model: 'Graph Neural Net + Autoencoder'
+    trigger: 'Offshore high-velocity wire + Unseen beneficiary + Geo-hop delta',
+    model: 'Ensemble (VAE + XGBoost)',
+    sandboxPreset: {
+      amount: 142500,
+      velocity: 11,
+      geoDistance: 8200,
+      timeHour: 2,
+      deviceEntropy: 'high',
+      accountAgeMonths: 6,
+      beneficiaryNew: true,
+    },
   },
   {
     id: 'TX-948119',
@@ -23,12 +32,21 @@ const INITIAL_TRANSACTIONS = [
     channelIcon: CreditCard,
     sender: 'ACC-3129 (London)',
     recipient: 'Whole Foods Retail',
-    amount: 84.50,
+    amount: 84.5,
     currency: '£',
     riskScore: 4,
     status: 'NORMAL',
-    trigger: 'Matches historical habitual spending baseline',
-    model: 'XGBoost Baseline'
+    trigger: 'Matches 90-day habitual spending baseline & trusted device',
+    model: 'XGBoost Baseline',
+    sandboxPreset: {
+      amount: 85,
+      velocity: 1,
+      geoDistance: 0,
+      timeHour: 14,
+      deviceEntropy: 'low',
+      accountAgeMonths: 54,
+      beneficiaryNew: false,
+    },
   },
   {
     id: 'TX-948118',
@@ -41,8 +59,17 @@ const INITIAL_TRANSACTIONS = [
     currency: '$',
     riskScore: 68,
     status: 'SUSPICIOUS',
-    trigger: 'Midnight withdrawal surge + Consecutive PIN retries within 40 seconds',
-    model: 'Isolation Forest'
+    trigger: 'Midnight withdrawal surge + Consecutive attempts within 40s',
+    model: 'Isolation Forest',
+    sandboxPreset: {
+      amount: 3000,
+      velocity: 9,
+      geoDistance: 650,
+      timeHour: 3,
+      deviceEntropy: 'medium',
+      accountAgeMonths: 24,
+      beneficiaryNew: true,
+    },
   },
   {
     id: 'TX-948117',
@@ -55,8 +82,17 @@ const INITIAL_TRANSACTIONS = [
     currency: '₹',
     riskScore: 8,
     status: 'NORMAL',
-    trigger: 'Known trusted contact + Biometric FaceID authenticated',
-    model: 'XGBoost Baseline'
+    trigger: 'Whitelisted contact + Verified hardware biometric token',
+    model: 'XGBoost Baseline',
+    sandboxPreset: {
+      amount: 450,
+      velocity: 2,
+      geoDistance: 0,
+      timeHour: 11,
+      deviceEntropy: 'low',
+      accountAgeMonths: 42,
+      beneficiaryNew: false,
+    },
   },
   {
     id: 'TX-948116',
@@ -69,12 +105,21 @@ const INITIAL_TRANSACTIONS = [
     currency: '$',
     riskScore: 94,
     status: 'CRITICAL',
-    trigger: 'Smurfing velocity: 6th transaction below $10,000 reporting threshold',
-    model: 'LSTM Temporal Sequence'
+    trigger: 'Structuring / Smurfing burst just below $10,000 CTR threshold',
+    model: 'Autoencoder + Velocity',
+    sandboxPreset: {
+      amount: 9800,
+      velocity: 16,
+      geoDistance: 400,
+      timeHour: 15,
+      deviceEntropy: 'high',
+      accountAgeMonths: 3,
+      beneficiaryNew: true,
+    },
   },
 ];
 
-export default function LiveTransactionStream({ onSelectTx }) {
+export default function LiveTransactionStream({ onSelectTx, activeTxId }) {
   const [transactions, setTransactions] = useState(INITIAL_TRANSACTIONS);
   const [isStreaming, setIsStreaming] = useState(true);
   const [filterType, setFilterType] = useState('ALL');
@@ -83,31 +128,58 @@ export default function LiveTransactionStream({ onSelectTx }) {
     if (!isStreaming) return;
 
     const interval = setInterval(() => {
-      const isAnomaly = Math.random() > 0.65;
+      const isAnomaly = Math.random() > 0.68;
       const isSuspicious = !isAnomaly && Math.random() > 0.5;
 
       const types = ['SWIFT Wire', 'POS Terminal', 'ATM Cash Out', 'Mobile P2P', 'E-Commerce API'];
       const icons = [Globe, CreditCard, Building2, Smartphone, CreditCard];
       const typeIdx = Math.floor(Math.random() * types.length);
 
-      let riskScore = Math.floor(Math.random() * 20 + 2);
+      let riskScore = Math.floor(Math.random() * 18 + 3);
       let status = 'NORMAL';
-      let trigger = 'Verified biometric signature & normal merchant profile';
+      let trigger = 'Verified device signature & normal merchant profile';
       let model = 'XGBoost Baseline';
-      let amount = +(Math.random() * 400 + 15).toFixed(2);
+      let amount = +(Math.random() * 450 + 25).toFixed(2);
+      let sandboxPreset = {
+        amount: Math.round(amount),
+        velocity: 1,
+        geoDistance: 0,
+        timeHour: 13,
+        deviceEntropy: 'low',
+        accountAgeMonths: 48,
+        beneficiaryNew: false,
+      };
 
       if (isAnomaly) {
-        riskScore = Math.floor(Math.random() * 25 + 75);
+        riskScore = Math.floor(Math.random() * 22 + 76);
         status = 'CRITICAL';
-        amount = Math.floor(Math.random() * 85000 + 9500);
-        trigger = 'Impossible travel speed (Tokyo → London in 14m) + Elevated entropy';
-        model = 'Isolation Forest + Autoencoder';
+        amount = Math.floor(Math.random() * 85000 + 12000);
+        trigger = 'Impossible travel speed + Unrecognized device entropy';
+        model = 'VAE + Isolation Forest';
+        sandboxPreset = {
+          amount: Math.min(100000, amount),
+          velocity: 14,
+          geoDistance: 8900,
+          timeHour: 2,
+          deviceEntropy: 'high',
+          accountAgeMonths: 4,
+          beneficiaryNew: true,
+        };
       } else if (isSuspicious) {
-        riskScore = Math.floor(Math.random() * 30 + 45);
+        riskScore = Math.floor(Math.random() * 26 + 46);
         status = 'SUSPICIOUS';
-        amount = Math.floor(Math.random() * 3500 + 800);
-        trigger = 'Deviation from 90-day account variance + Device mismatch';
-        model = 'One-Class SVM';
+        amount = Math.floor(Math.random() * 3500 + 1200);
+        trigger = 'Elevated 1h velocity vs 90-day account baseline';
+        model = 'XGBoost + Velocity';
+        sandboxPreset = {
+          amount,
+          velocity: 8,
+          geoDistance: 700,
+          timeHour: 3,
+          deviceEntropy: 'medium',
+          accountAgeMonths: 18,
+          beneficiaryNew: true,
+        };
       }
 
       const now = new Date();
@@ -118,56 +190,60 @@ export default function LiveTransactionStream({ onSelectTx }) {
         time: timeStr,
         type: types[typeIdx],
         channelIcon: icons[typeIdx],
-        sender: `ACC-${Math.floor(Math.random() * 8999 + 1000)} (${['Tokyo', 'Zurich', 'New York', 'Dubai', 'Sydney'][Math.floor(Math.random() * 5)]})`,
-        recipient: `ACC-${Math.floor(Math.random() * 8999 + 1000)} (${['London', 'Frankfurt', 'Singapore', 'Toronto', 'Sao Paulo'][Math.floor(Math.random() * 5)]})`,
-        amount: amount,
+        sender: `ACC-${Math.floor(Math.random() * 8999 + 1000)} (${['Mumbai', 'Chennai', 'London', 'Zurich', 'Singapore'][Math.floor(Math.random() * 5)]})`,
+        recipient: `ACC-${Math.floor(Math.random() * 8999 + 1000)} (${['Bengaluru', 'New York', 'Frankfurt', 'Dubai', 'Toronto'][Math.floor(Math.random() * 5)]})`,
+        amount,
         currency: '$',
-        riskScore: riskScore,
-        status: status,
-        trigger: trigger,
-        model: model
+        riskScore,
+        status,
+        trigger,
+        model,
+        sandboxPreset,
       };
 
-      setTransactions(prev => [newTx, ...prev.slice(0, 14)]);
-    }, 2400);
+      setTransactions((prev) => [newTx, ...prev.slice(0, 11)]);
+    }, 3000);
 
     return () => clearInterval(interval);
   }, [isStreaming]);
 
-  const filtered = transactions.filter(t => {
-    if (filterType === 'CRITICAL') return t.status === 'CRITICAL';
-    if (filterType === 'SUSPICIOUS') return t.status === 'SUSPICIOUS';
-    if (filterType === 'NORMAL') return t.status === 'NORMAL';
-    return true;
+  const filtered = transactions.filter((t) => {
+    if (filterType === 'ALL') return true;
+    return t.status === filterType;
   });
 
   return (
-    <section id="features" className="py-20 relative bg-white border-t border-slate-100">
+    <section id="features" className="py-16 sm:py-20 bg-[#F8FAFC] border-b border-slate-200/80">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        
         {/* Section Header */}
         <div className="flex flex-col md:flex-row md:items-end justify-between mb-8 gap-4">
           <div>
-            <div className="flex items-center gap-2 text-sky-700 font-mono text-xs font-bold tracking-wider uppercase mb-2">
-              <Activity className="w-4 h-4" />
-              <span>Real-Time Ingestion Pipeline</span>
+            <div className="inline-flex items-center gap-2 text-[#0052CC] font-mono text-xs font-bold tracking-wider uppercase mb-2">
+              <Activity className="w-4 h-4" aria-hidden="true" />
+              <span>Live Simulation Feed</span>
             </div>
-            <h2 className="text-3xl sm:text-4xl font-extrabold text-slate-900 tracking-tight">
-              Live Core Banking Transaction Surveillance
+            <h2 id="live-stream-heading" className="text-2xl sm:text-4xl font-extrabold text-[#0A2540] tracking-tight">
+              Transaction Surveillance Stream
             </h2>
-            <p className="text-slate-600 text-sm mt-1 max-w-2xl">
-              Microsecond neural evaluation across multi-channel payment streams. Click on any record to inspect deep SHAP feature attribution in the sandbox.
+            <p className="text-slate-600 text-sm mt-1.5 max-w-2xl">
+              Simulated multi-channel banking feed demonstrating real-time scoring. Select any row or click <strong>Inspect</strong> to load its parameters into the SHAP Risk Sandbox below.
             </p>
           </div>
 
-          {/* Stream Controls & Filters */}
-          <div className="flex items-center gap-2 flex-wrap">
-            <div className="flex items-center bg-white border border-slate-200 rounded-2xl p-1 text-xs shadow-sm">
+          {/* Filter & Stream Controls */}
+          <div className="flex items-center gap-2.5 flex-wrap">
+            <div role="group" aria-label="Filter transactions by risk status" className="inline-flex items-center bg-white border border-slate-200 rounded-xl p-1 text-xs shadow-2xs">
               {['ALL', 'CRITICAL', 'SUSPICIOUS', 'NORMAL'].map((f) => (
                 <button
                   key={f}
+                  type="button"
+                  aria-pressed={filterType === f}
                   onClick={() => setFilterType(f)}
-                  className={`px-3 py-1.5 rounded-xl font-bold transition-all ${filterType === f ? 'bg-sky-600 text-white shadow-sm' : 'text-slate-600 hover:text-slate-900'}`}
+                  className={`px-3 py-1.5 rounded-lg font-semibold transition-colors cursor-pointer ${
+                    filterType === f
+                      ? 'bg-[#0052CC] text-white'
+                      : 'text-slate-600 hover:text-[#0A2540] hover:bg-slate-50'
+                  }`}
                 >
                   {f}
                 </button>
@@ -175,124 +251,140 @@ export default function LiveTransactionStream({ onSelectTx }) {
             </div>
 
             <button
+              type="button"
               onClick={() => setIsStreaming(!isStreaming)}
-              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-2xl border text-xs font-bold transition-all shadow-sm ${isStreaming ? 'bg-white border-slate-200 text-slate-700 hover:bg-slate-50' : 'bg-amber-50 border-amber-200 text-amber-800'}`}
+              aria-pressed={!isStreaming}
+              className={`inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl border text-xs font-semibold transition-colors cursor-pointer ${
+                isStreaming
+                  ? 'bg-white border-slate-200 text-slate-700 hover:bg-slate-50'
+                  : 'bg-amber-50 border-amber-300 text-amber-900'
+              }`}
             >
-              {isStreaming ? <Pause className="w-3.5 h-3.5 text-sky-600" /> : <Play className="w-3.5 h-3.5 text-amber-600" />}
-              <span>{isStreaming ? 'Pause Stream' : 'Resume Live'}</span>
+              {isStreaming ? (
+                <Pause className="w-3.5 h-3.5 text-[#0052CC]" aria-hidden="true" />
+              ) : (
+                <Play className="w-3.5 h-3.5 text-amber-700" aria-hidden="true" />
+              )}
+              <span>{isStreaming ? 'Pause Feed' : 'Resume Feed'}</span>
             </button>
           </div>
         </div>
 
-        {/* Live Stream Table Container */}
-        <div className="glass-card-3d rounded-3xl border border-slate-200 overflow-hidden shadow-xl bg-white">
-          <div className="overflow-x-auto">
-            <table className="w-full text-left border-collapse">
+        {/* Semantic Accessible Table Container */}
+        <div className="bank-surface rounded-2xl overflow-hidden">
+          <div
+            tabIndex={0}
+            role="region"
+            aria-labelledby="live-stream-heading"
+            className="table-scroll-region"
+          >
+            <table className="w-full text-left border-collapse min-w-[820px]">
+              <caption className="visually-hidden">
+                Simulated banking transactions with risk score, policy decision, and AI attribution triggers.
+              </caption>
               <thead>
-                <tr className="bg-slate-50/90 border-b border-slate-200 text-[11px] font-mono uppercase tracking-wider text-slate-500">
-                  <th className="py-3.5 px-5 font-bold">Tx ID & Timestamp</th>
-                  <th className="py-3.5 px-4 font-bold">Channel</th>
-                  <th className="py-3.5 px-4 font-bold">Route (Origin → Beneficiary)</th>
-                  <th className="py-3.5 px-4 font-bold text-right">Amount</th>
-                  <th className="py-3.5 px-4 font-bold text-center">Risk Score</th>
-                  <th className="py-3.5 px-4 font-bold">Status</th>
-                  <th className="py-3.5 px-4 font-bold">AI Explainability Trigger</th>
-                  <th className="py-3.5 px-5 font-bold text-right">Action</th>
+                <tr className="bg-slate-50 border-b border-slate-200 text-[11px] font-mono uppercase tracking-wider text-slate-600">
+                  <th scope="col" className="py-3.5 px-5 font-bold">Tx ID &amp; Time</th>
+                  <th scope="col" className="py-3.5 px-4 font-bold">Channel</th>
+                  <th scope="col" className="py-3.5 px-4 font-bold">Origin &rarr; Beneficiary</th>
+                  <th scope="col" className="py-3.5 px-4 font-bold text-right">Amount</th>
+                  <th scope="col" className="py-3.5 px-4 font-bold text-center">Risk Score</th>
+                  <th scope="col" className="py-3.5 px-4 font-bold">Status</th>
+                  <th scope="col" className="py-3.5 px-4 font-bold">Primary Trigger</th>
+                  <th scope="col" className="py-3.5 px-5 font-bold text-right">Sandbox</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-100 font-sans text-xs">
+              <tbody className="divide-y divide-slate-100 text-xs bg-white">
                 {filtered.map((tx) => {
                   const Icon = tx.channelIcon;
+                  const isInspected = activeTxId === tx.id;
                   return (
-                    <tr 
+                    <tr
                       key={tx.id}
-                      className="hover:bg-sky-50/50 transition-colors group cursor-pointer"
-                      onClick={() => onSelectTx && onSelectTx(tx)}
+                      className={`transition-colors ${
+                        isInspected ? 'bg-sky-50/80' : 'hover:bg-slate-50/90'
+                      }`}
                     >
-                      {/* Tx ID & Time */}
-                      <td className="py-3 px-5 font-mono">
-                        <div className="font-bold text-slate-900 group-hover:text-sky-700 transition-colors">
-                          {tx.id}
-                        </div>
-                        <div className="text-[10px] text-slate-400">{tx.time}</div>
-                      </td>
+                      <th scope="row" className="py-3 px-5 font-mono text-left font-normal">
+                        <div className="font-bold text-[#0A2540]">{tx.id}</div>
+                        <div className="text-[11px] text-slate-500">{tx.time}</div>
+                      </th>
 
-                      {/* Channel */}
                       <td className="py-3 px-4">
                         <div className="flex items-center gap-2">
                           <div className="p-1.5 rounded-lg bg-slate-100 text-slate-700">
-                            <Icon className="w-3.5 h-3.5" />
+                            <Icon className="w-3.5 h-3.5" aria-hidden="true" />
                           </div>
-                          <span className="text-slate-700 font-semibold">{tx.type}</span>
+                          <span className="text-slate-700 font-semibold whitespace-nowrap">{tx.type}</span>
                         </div>
                       </td>
 
-                      {/* Sender & Recipient */}
                       <td className="py-3 px-4">
                         <div className="text-slate-800 font-semibold">{tx.sender}</div>
-                        <div className="text-[11px] text-slate-500 flex items-center gap-1">
-                          <span>→</span>
-                          <span>{tx.recipient}</span>
-                        </div>
+                        <div className="text-[11px] text-slate-500">&rarr; {tx.recipient}</div>
                       </td>
 
-                      {/* Amount */}
-                      <td className="py-3 px-4 text-right font-mono font-black text-slate-900">
+                      <td className="py-3 px-4 text-right font-mono font-bold text-[#0A2540] whitespace-nowrap">
                         {tx.currency}{tx.amount.toLocaleString()}
                       </td>
 
-                      {/* Risk Score */}
                       <td className="py-3 px-4 text-center">
-                        <div className="inline-flex items-center gap-1.5">
-                          <div className="w-12 bg-slate-100 rounded-full h-2 overflow-hidden border border-slate-200">
-                            <div 
-                              className={`h-full rounded-full ${tx.riskScore > 70 ? 'bg-rose-500' : tx.riskScore > 40 ? 'bg-amber-500' : 'bg-emerald-500'}`}
+                        <div className="inline-flex items-center gap-2">
+                          <div className="w-12 bg-slate-100 rounded-full h-2 overflow-hidden border border-slate-200" aria-hidden="true">
+                            <div
+                              className={`h-full rounded-full ${
+                                tx.riskScore > 70 ? 'bg-rose-600' : tx.riskScore > 40 ? 'bg-amber-500' : 'bg-emerald-600'
+                              }`}
                               style={{ width: `${tx.riskScore}%` }}
                             />
                           </div>
-                          <span className={`font-mono font-bold text-xs ${tx.riskScore > 70 ? 'text-rose-600' : tx.riskScore > 40 ? 'text-amber-600' : 'text-emerald-600'}`}>
+                          <span
+                            className={`font-mono font-bold text-xs ${
+                              tx.riskScore > 70 ? 'text-rose-700' : tx.riskScore > 40 ? 'text-amber-700' : 'text-emerald-700'
+                            }`}
+                          >
                             {tx.riskScore}%
                           </span>
                         </div>
                       </td>
 
-                      {/* Status Badge */}
-                      <td className="py-3 px-4">
+                      <td className="py-3 px-4 whitespace-nowrap">
                         {tx.status === 'CRITICAL' && (
-                          <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-bold bg-rose-50 text-rose-700 border border-rose-200">
-                            <ShieldAlert className="w-3 h-3 text-rose-600" />
+                          <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-rose-50 text-rose-800 border border-rose-200">
+                            <ShieldAlert className="w-3 h-3" aria-hidden="true" />
                             CRITICAL
                           </span>
                         )}
                         {tx.status === 'SUSPICIOUS' && (
-                          <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-bold bg-amber-50 text-amber-800 border border-amber-200">
-                            <ShieldAlert className="w-3 h-3 text-amber-600" />
-                            SUSPICIOUS
+                          <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-amber-50 text-amber-800 border border-amber-200">
+                            <ShieldAlert className="w-3 h-3" aria-hidden="true" />
+                            STEP-UP MFA
                           </span>
                         )}
                         {tx.status === 'NORMAL' && (
-                          <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-bold bg-emerald-50 text-emerald-800 border border-emerald-200">
-                            <ShieldCheck className="w-3 h-3 text-emerald-600" />
-                            AUTHORIZED
+                          <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-emerald-50 text-emerald-800 border border-emerald-200">
+                            <ShieldCheck className="w-3 h-3" aria-hidden="true" />
+                            AUTO-CLEARED
                           </span>
                         )}
                       </td>
 
-                      {/* XAI Trigger Note */}
-                      <td className="py-3 px-4 max-w-xs truncate text-slate-700 font-medium">
-                        <div className="truncate text-xs">{tx.trigger}</div>
-                        <div className="text-[10px] text-sky-700 font-mono mt-0.5">Model: {tx.model}</div>
+                      <td className="py-3 px-4 max-w-xs">
+                        <div className="truncate text-slate-700 font-medium" title={tx.trigger}>
+                          {tx.trigger}
+                        </div>
+                        <div className="text-[10px] text-[#0052CC] font-mono mt-0.5">{tx.model}</div>
                       </td>
 
-                      {/* Action */}
                       <td className="py-3 px-5 text-right">
-                        <a
-                          href="#sandbox"
-                          className="inline-flex items-center gap-1 px-2.5 py-1 rounded-xl bg-slate-100 hover:bg-sky-100 text-slate-700 hover:text-sky-800 border border-slate-200 text-[11px] font-bold transition-all shadow-sm"
+                        <button
+                          type="button"
+                          onClick={() => onSelectTx && onSelectTx(tx)}
+                          className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg bg-slate-100 hover:bg-[#0052CC] text-slate-700 hover:text-white border border-slate-200 hover:border-[#0052CC] text-[11px] font-semibold transition-colors cursor-pointer"
                         >
-                          <Eye className="w-3 h-3" />
+                          <Eye className="w-3.5 h-3.5" aria-hidden="true" />
                           <span>Inspect</span>
-                        </a>
+                        </button>
                       </td>
                     </tr>
                   );
@@ -301,20 +393,20 @@ export default function LiveTransactionStream({ onSelectTx }) {
             </table>
           </div>
 
-          {/* Footer Bar */}
-          <div className="p-3.5 bg-slate-50 border-t border-slate-200 flex items-center justify-between text-xs text-slate-600 font-medium">
+          <div className="px-5 py-3 bg-slate-50 border-t border-slate-200 flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-xs text-slate-600">
             <div className="flex items-center gap-2">
-              <span className="relative flex h-2 w-2">
-                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-sky-500 opacity-75"></span>
-                <span className="relative inline-flex rounded-full h-2 w-2 bg-sky-600"></span>
+              <span className={`w-2 h-2 rounded-full ${isStreaming ? 'bg-emerald-500' : 'bg-amber-500'}`} aria-hidden="true" />
+              <span>
+                {isStreaming
+                  ? 'Demo Stream Active • Click Inspect on any row to simulate SHAP attribution below'
+                  : 'Demo Stream Paused'}
               </span>
-              <span>Kafka cluster active • Ingesting 150+ rolling transaction features</span>
             </div>
-            <div className="font-mono font-bold text-sky-700">Throughput: 4,280 msgs/sec</div>
+            <span className="font-mono text-[11px] text-slate-500">
+              Showing {filtered.length} of {transactions.length} recent events
+            </span>
           </div>
-
         </div>
-
       </div>
     </section>
   );
