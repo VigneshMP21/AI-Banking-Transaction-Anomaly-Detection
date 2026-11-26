@@ -28,8 +28,9 @@
   - **Interactive Risk & XAI Sandbox** (`InteractiveAnomalySandbox.jsx`): 5 attack presets (AML Smurfing, Midnight ATM Cashout, Impossible Travel, Corporate Transfer, Card Testing), live parameter sliders, composite risk score, SHAP attribution bars, and counterfactual recourse guidance.
   - **System Architecture, Model Matrix & Governance Sections** (`ExplainableRiskEngine.jsx`, `ArchitecturePipeline.jsx`, `ModelBenchmarking.jsx`, `InstitutionalCompliance.jsx`).
 - **Authentication & Role Onboarding (`backend/main.py`, `backend/auth.py`, `LoginPage.jsx`, `RegisterPage.jsx`)**
-  - Bcrypt password hashing, 24-hour HS256 JWT tokens, auto-generated `BG-XXXX-XXXX-XXXX` bank account numbers, and `User` / `Analyst` role registration.
-  - Offline demo fallback in `AuthContext.jsx` when the backend server is stopped.
+  - Institutional split-screen Sign In & Account Opening pages with live FastAPI/PostgreSQL connectivity badge and offline demo fallback.
+  - **Sign In (`#/signin`)**: Email/username/account ID login, post-interaction validation, accessible password visibility toggle, persistent Remember Me, 1-click seeded demo profile fill, and native `<dialog>` password recovery modal.
+  - **Account Opening (`#/signup`)**: Real-time password complexity rules & strength meter, role access preview (`User` Client vs `Analyst` Ops), Bcrypt password hashing, 24-hour HS256 JWT tokens, auto-generated `BG-XXXX-XXXX-XXXX` account numbers, and direct portal onboarding.
 - **PostgreSQL (`pgAdmin 4`) & SQLite Fallback Connector (`backend/database.py`, `DbConfigPage.jsx`)**
   - Dynamic PostgreSQL connection testing and table initialization (`/api/db/status`, `/api/db/connect`, `/api/db/init`).
   - Automatic local SQLite fallback (`bankguard_fallback.db`) so the API boots cleanly even before PostgreSQL is configured.
