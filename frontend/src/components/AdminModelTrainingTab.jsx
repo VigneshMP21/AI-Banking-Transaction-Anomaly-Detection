@@ -216,7 +216,11 @@ export default function AdminModelTrainingTab({ token, API_BASE_URL, onJumpToTes
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.detail || 'Activation failed');
-      setRegistry(data);
+      if (Array.isArray(data?.versions)) {
+        setRegistry(data);
+      } else {
+        await loadRegistry();
+      }
       setStatusMessage({
         type: 'success',
         text: `Activated ${versionId} for live portal scoring & Model Testing Lab.`,
@@ -432,7 +436,7 @@ export default function AdminModelTrainingTab({ token, API_BASE_URL, onJumpToTes
                     {inspection.rows.toLocaleString('en-IN')} Rows
                   </span>
                   <span className="px-2.5 py-0.5 rounded-full bg-slate-100 text-slate-700">
-                    {inspection.cols} Columns
+                    {inspection.cols ?? inspection.columns?.length ?? 0} Columns
                   </span>
                   <span className="px-2.5 py-0.5 rounded-full bg-amber-50 text-amber-700">
                     Missing Cells: {inspection.missing_cells}
@@ -461,9 +465,9 @@ export default function AdminModelTrainingTab({ token, API_BASE_URL, onJumpToTes
                     className="w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-xs font-semibold text-slate-800"
                   >
                     <option value="">-- Unsupervised (No Target Label) --</option>
-                    {inspection.columns.map((c) => (
+                    {(inspection.columns || []).map((c) => (
                       <option key={c} value={c}>
-                        {c} ({inspection.dtypes[c]})
+                        {c} ({inspection.dtypes?.[c] || 'auto'})
                       </option>
                     ))}
                   </select>
@@ -488,9 +492,9 @@ export default function AdminModelTrainingTab({ token, API_BASE_URL, onJumpToTes
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-slate-100">
-                    {inspection.sample_rows.slice(0, 4).map((row, idx) => (
+                    {(inspection.sample_rows || inspection.preview || []).slice(0, 4).map((row, idx) => (
                       <tr key={idx} className="hover:bg-slate-50">
-                        {inspection.columns.slice(0, 9).map((col) => (
+                        {(inspection.columns || []).slice(0, 9).map((col) => (
                           <td key={col} className="px-2.5 py-1.5 text-slate-700 whitespace-nowrap">
                             {String(row[col] ?? '')}
                           </td>
@@ -702,7 +706,7 @@ export default function AdminModelTrainingTab({ token, API_BASE_URL, onJumpToTes
           </button>
         </div>
 
-        {registry.versions.length === 0 ? (
+        {(registry?.versions?.length || 0) === 0 ? (
           <div className="rounded-xl bg-slate-50 border border-slate-200 p-6 text-center text-xs text-slate-500">
             No trained model versions found yet. Run the pipeline above using an uploaded CSV or Indian Synthetic Generator.
           </div>
@@ -720,7 +724,7 @@ export default function AdminModelTrainingTab({ token, API_BASE_URL, onJumpToTes
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100">
-                {registry.versions.map((ver) => {
+                {(registry?.versions || []).map((ver) => {
                   const isActive = registry.active_version === ver.version_id;
                   const ens = ver.leaderboard?.find((m) => m.model_key === 'ensemble') || ver.leaderboard?.[0];
                   return (

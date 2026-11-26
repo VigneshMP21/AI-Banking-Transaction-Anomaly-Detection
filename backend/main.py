@@ -1252,7 +1252,7 @@ def activate_ml_model_endpoint(
     db: Session = Depends(get_db),
 ):
     try:
-        updated = ml_engine.set_active_version(version_id)
+        ml_engine.set_active_version(version_id)
     except FileNotFoundError as fnf:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(fnf))
 
@@ -1265,7 +1265,7 @@ def activate_ml_model_endpoint(
         )
     )
     db.commit()
-    return updated
+    return ml_engine.list_model_versions()
 
 
 @app.post("/api/ml/test/batch-csv")
