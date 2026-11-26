@@ -64,6 +64,5 @@ python -m uvicorn main:app --reload --port 8000
 
 | Role | Username / Email | Password | Account Tier |
 | :--- | :--- | :--- | :--- |
-| **Chief Risk Analyst** | `alex.vance@bankguard.ai` / `alex_vance` | `BankGuard2026!` | Institutional Vault ($4.85M) |
-| **Institutional Client** | `elena.rostova@bankguard.ai` / `elena_rostova` | `BankGuard2026!` | Premier Business (€890K) |
-| **Compliance Auditor** | `david.miller@audits.bankguard.ai` / `david_miller` | `BankGuardAudit2026!` | Tier-1 Checking ($250K) |
+| **Chief Risk Analyst** | `alex.vance@bankguard.ai` / `alex_vance` | `BankGuard2026!` | Institutional Vault (₹48,50,000) |
+| **Institutional Client** | `elena.rostova@bankguard.ai` / `elena_rostova` | `BankGuard2026!` | Premier Business (₹8,90,000) |

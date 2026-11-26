@@ -17,9 +17,9 @@ const PRESET_SCENARIOS = [
   {
     id: 'smurfing',
     title: 'AML Smurfing / Structuring',
-    desc: 'Rapid transfers structured just below the $10,000 CTR reporting threshold.',
+    desc: 'Rapid transfers structured just below the ₹50,000 PAN reporting threshold.',
     params: {
-      amount: 9850,
+      amount: 49500,
       velocity: 14,
       geoDistance: 120,
       timeHour: 15,
@@ -31,9 +31,9 @@ const PRESET_SCENARIOS = [
   {
     id: 'atm_drain',
     title: 'Midnight ATM Cashout',
-    desc: 'Consecutive cash withdrawals at 03:00 UTC from an unfamiliar terminal.',
+    desc: 'Consecutive cash withdrawals at 03:00 IST from an unfamiliar terminal.',
     params: {
-      amount: 4000,
+      amount: 25000,
       velocity: 8,
       geoDistance: 650,
       timeHour: 3,
@@ -45,11 +45,11 @@ const PRESET_SCENARIOS = [
   {
     id: 'credential_hijack',
     title: 'Impossible Travel / Hijack',
-    desc: 'Cross-border transfer 9,500 km away within minutes of prior session.',
+    desc: 'Transfer from Delhi 2,100 km away within minutes of Chennai login.',
     params: {
-      amount: 12500,
+      amount: 125000,
       velocity: 3,
-      geoDistance: 9500,
+      geoDistance: 2100,
       timeHour: 21,
       deviceEntropy: 'high',
       accountAgeMonths: 48,
@@ -58,10 +58,10 @@ const PRESET_SCENARIOS = [
   },
   {
     id: 'payroll_normal',
-    title: 'Verified Corporate Transfer',
+    title: 'Verified NEFT Settlement',
     desc: 'Business-hours settlement to a whitelisted beneficiary from a trusted device.',
     params: {
-      amount: 25000,
+      amount: 85000,
       velocity: 1,
       geoDistance: 0,
       timeHour: 10,
@@ -72,10 +72,10 @@ const PRESET_SCENARIOS = [
   },
   {
     id: 'micro_probing',
-    title: 'Card Testing / Bot Flood',
-    desc: 'Automated burst of micro-charges across multiple endpoints in 1 hour.',
+    title: 'UPI Bot Probing Flood',
+    desc: 'Automated burst of ₹10 micro-transfers across multiple accounts in 1 hour.',
     params: {
-      amount: 1.5,
+      amount: 10,
       velocity: 28,
       geoDistance: 450,
       timeHour: 2,
@@ -90,9 +90,9 @@ function buildPresetFromTx(tx) {
   if (!tx) return PRESET_SCENARIOS[0].params;
   return (
     tx.sandboxPreset || {
-      amount: Math.min(150000, Math.max(1, Math.round(tx.amount || 5000))),
+      amount: Math.min(1500000, Math.max(10, Math.round(tx.amount || 25000))),
       velocity: tx.status === 'CRITICAL' ? 14 : tx.status === 'SUSPICIOUS' ? 7 : 1,
-      geoDistance: tx.status === 'CRITICAL' ? 8200 : tx.status === 'SUSPICIOUS' ? 600 : 0,
+      geoDistance: tx.status === 'CRITICAL' ? 2100 : tx.status === 'SUSPICIOUS' ? 600 : 0,
       timeHour: tx.status === 'CRITICAL' ? 2 : 13,
       deviceEntropy: tx.status === 'CRITICAL' ? 'high' : tx.status === 'SUSPICIOUS' ? 'medium' : 'low',
       accountAgeMonths: tx.status === 'CRITICAL' ? 4 : 42,
@@ -126,10 +126,10 @@ export default function InteractiveAnomalySandbox({ initialTx, onClearInspectedT
     const baseScore = 8;
 
     let amountImpact = 0;
-    if (params.amount > 50000 && params.beneficiaryNew) amountImpact = 34;
-    else if (params.amount >= 9000 && params.amount <= 9999) amountImpact = 26;
-    else if (params.amount > 10000) amountImpact = 16;
-    else if (params.amount < 5 && params.velocity > 10) amountImpact = 30;
+    if (params.amount > 200000 && params.beneficiaryNew) amountImpact = 34;
+    else if (params.amount >= 45000 && params.amount <= 49999) amountImpact = 26;
+    else if (params.amount > 100000) amountImpact = 16;
+    else if (params.amount <= 50 && params.velocity > 10) amountImpact = 30;
     else amountImpact = 2;
 
     let velocityImpact = 0;
@@ -139,7 +139,7 @@ export default function InteractiveAnomalySandbox({ initialTx, onClearInspectedT
     else velocityImpact = -6;
 
     let geoImpact = 0;
-    if (params.geoDistance > 5000) geoImpact = 34;
+    if (params.geoDistance > 1500) geoImpact = 34;
     else if (params.geoDistance > 500) geoImpact = 16;
     else if (params.geoDistance > 50) geoImpact = 4;
     else geoImpact = -8;
@@ -170,7 +170,7 @@ export default function InteractiveAnomalySandbox({ initialTx, onClearInspectedT
     let riskTier = 'LOW_RISK';
     let action = 'AUTO_CLEARED';
     let explanation =
-      'Transaction aligns with habitual account baseline, verified hardware token, and expected geo-location.';
+      'Transaction aligns with habitual account baseline, verified hardware token, and home Indian corridor.';
 
     if (finalScore >= 75) {
       riskTier = 'CRITICAL_ANOMALY';
@@ -186,10 +186,10 @@ export default function InteractiveAnomalySandbox({ initialTx, onClearInspectedT
 
     const shapFactors = [
       { name: 'Velocity Density (1h)', value: velocityImpact, label: `${params.velocity} tx / 60m` },
-      { name: 'Geo-Hop Spatial Delta', value: geoImpact, label: `${params.geoDistance.toLocaleString()} km` },
-      { name: 'Payload Amount Pattern', value: amountImpact, label: `$${params.amount.toLocaleString()}` },
+      { name: 'Geo-Hop Spatial Delta', value: geoImpact, label: `${params.geoDistance.toLocaleString('en-IN')} km` },
+      { name: 'Payload Amount Pattern', value: amountImpact, label: `₹${params.amount.toLocaleString('en-IN')}` },
       { name: 'Device & IP Entropy', value: deviceImpact, label: `${params.deviceEntropy.toUpperCase()} risk profile` },
-      { name: 'Origin Timestamp (UTC)', value: timeImpact, label: `${String(params.timeHour).padStart(2, '0')}:00 UTC` },
+      { name: 'Origin Timestamp (IST)', value: timeImpact, label: `${String(params.timeHour).padStart(2, '0')}:00 IST` },
       {
         name: 'Beneficiary Trust',
         value: beneficiaryImpact,
@@ -198,17 +198,16 @@ export default function InteractiveAnomalySandbox({ initialTx, onClearInspectedT
       { name: 'Account Tenure', value: tenureImpact, label: `${params.accountAgeMonths} months active` },
     ].sort((a, b) => Math.abs(b.value) - Math.abs(a.value));
 
-    // Actionable Counterfactual Recourse Suggestions
     const recourseSteps = [];
     if (finalScore >= 45) {
       if (params.deviceEntropy !== 'low') {
         recourseSteps.push('Authenticate from a registered trusted device (low entropy) to reduce risk by ~22–32 pts.');
       }
       if (params.geoDistance > 500) {
-        recourseSteps.push('Confirm travel status or originate within <500 km home corridor to remove geo-hop penalty.');
+        recourseSteps.push('Confirm travel status or originate within <500 km home city corridor to remove geo-hop penalty.');
       }
       if (params.beneficiaryNew) {
-        recourseSteps.push('Complete beneficiary pre-verification / whitelist cooling period (-28 pts shift).');
+        recourseSteps.push('Complete beneficiary pre-verification / cooling period (-28 pts shift).');
       }
       if (params.velocity > 4) {
         recourseSteps.push('Reduce burst frequency below 4 tx/hr to clear velocity anomaly.');
@@ -235,7 +234,6 @@ export default function InteractiveAnomalySandbox({ initialTx, onClearInspectedT
   return (
     <section id="sandbox" className="py-16 sm:py-20 bg-white border-b border-slate-200/80">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        {/* Section Header */}
         <div className="max-w-3xl mb-10">
           <div className="inline-flex items-center gap-2 text-[#0052CC] font-mono text-xs font-bold uppercase tracking-wider mb-2">
             <Sliders className="w-4 h-4" aria-hidden="true" />
@@ -245,11 +243,10 @@ export default function InteractiveAnomalySandbox({ initialTx, onClearInspectedT
             Test Anomaly Scoring, SHAP &amp; What-If Recourse
           </h2>
           <p className="text-slate-600 text-sm sm:text-base mt-2">
-            Choose an attack scenario or adjust parameters below to observe how adaptive policy enforcement, feature attribution, and counterfactual recourse respond in real time.
+            Choose an Indian banking attack scenario or adjust INR parameters below to observe adaptive policy enforcement, feature attribution, and counterfactual recourse in real time.
           </p>
         </div>
 
-        {/* Inspected Transaction Banner */}
         {inspectedTxLabel && (
           <div className="mb-6 px-4 py-3 rounded-xl bg-sky-50 border border-sky-200 flex items-center justify-between gap-3 text-xs">
             <span className="text-[#0A2540] font-medium">
@@ -265,7 +262,6 @@ export default function InteractiveAnomalySandbox({ initialTx, onClearInspectedT
           </div>
         )}
 
-        {/* Preset Selector Grid */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3 mb-8">
           {PRESET_SCENARIOS.map((scenario) => {
             const isSelected = activePreset === scenario.id;
@@ -285,17 +281,13 @@ export default function InteractiveAnomalySandbox({ initialTx, onClearInspectedT
                   <span>{scenario.title}</span>
                   {isSelected && <span className="w-2 h-2 rounded-full bg-[#0052CC] shrink-0" aria-hidden="true" />}
                 </div>
-                <div className="text-[11px] text-slate-600 line-clamp-2 leading-relaxed">
-                  {scenario.desc}
-                </div>
+                <div className="text-[11px] text-slate-600 line-clamp-2 leading-relaxed">{scenario.desc}</div>
               </button>
             );
           })}
         </div>
 
-        {/* Interactive Workspace */}
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
-          {/* Left Column: Controls */}
           <div className="lg:col-span-5 bank-surface rounded-2xl p-6 space-y-5">
             <div className="flex items-center justify-between pb-3 border-b border-slate-200">
               <div className="flex items-center gap-2">
@@ -313,18 +305,17 @@ export default function InteractiveAnomalySandbox({ initialTx, onClearInspectedT
             </div>
 
             <div className="space-y-4 text-xs">
-              {/* Amount */}
               <div>
                 <div className="flex justify-between font-semibold text-slate-700 mb-1.5">
-                  <label htmlFor={amountId}>Transaction Payload (USD)</label>
-                  <span className="font-mono font-bold text-[#0052CC]">${params.amount.toLocaleString()}</span>
+                  <label htmlFor={amountId}>Transaction Payload (INR)</label>
+                  <span className="font-mono font-bold text-[#0052CC]">&#8377;{params.amount.toLocaleString('en-IN')}</span>
                 </div>
                 <input
                   id={amountId}
                   type="range"
-                  min="1"
-                  max="150000"
-                  step="50"
+                  min="10"
+                  max="1000000"
+                  step="500"
                   value={params.amount}
                   onChange={(e) => {
                     setActivePreset('custom');
@@ -333,13 +324,12 @@ export default function InteractiveAnomalySandbox({ initialTx, onClearInspectedT
                   className="w-full cursor-pointer"
                 />
                 <div className="flex justify-between text-[10px] text-slate-500 mt-1 font-mono">
-                  <span>$1</span>
-                  <span className="text-[#0052CC] font-semibold">$10k CTR Threshold</span>
-                  <span>$150k</span>
+                  <span>&#8377;10</span>
+                  <span className="text-[#0052CC] font-semibold">&#8377;50,000 PAN Limit</span>
+                  <span>&#8377;10,00,000</span>
                 </div>
               </div>
 
-              {/* Velocity */}
               <div>
                 <div className="flex justify-between font-semibold text-slate-700 mb-1.5">
                   <label htmlFor={velocityId}>Velocity (Transactions / Hour)</label>
@@ -364,18 +354,17 @@ export default function InteractiveAnomalySandbox({ initialTx, onClearInspectedT
                 </div>
               </div>
 
-              {/* Geo-Hop */}
               <div>
                 <div className="flex justify-between font-semibold text-slate-700 mb-1.5">
                   <label htmlFor={geoId}>Spatial Delta / Geo-Hop</label>
-                  <span className="font-mono font-bold text-[#0052CC]">{params.geoDistance.toLocaleString()} km</span>
+                  <span className="font-mono font-bold text-[#0052CC]">{params.geoDistance.toLocaleString('en-IN')} km</span>
                 </div>
                 <input
                   id={geoId}
                   type="range"
                   min="0"
-                  max="12000"
-                  step="100"
+                  max="3500"
+                  step="50"
                   value={params.geoDistance}
                   onChange={(e) => {
                     setActivePreset('custom');
@@ -384,17 +373,16 @@ export default function InteractiveAnomalySandbox({ initialTx, onClearInspectedT
                   className="w-full cursor-pointer"
                 />
                 <div className="flex justify-between text-[10px] text-slate-500 mt-1 font-mono">
-                  <span>0 km (Local)</span>
-                  <span>2,000 km</span>
-                  <span>12,000 km</span>
+                  <span>0 km (Home City)</span>
+                  <span>1,000 km</span>
+                  <span>3,500 km</span>
                 </div>
               </div>
 
-              {/* Time */}
               <div>
                 <div className="flex justify-between font-semibold text-slate-700 mb-1.5">
-                  <label htmlFor={timeId}>Origin Hour (UTC)</label>
-                  <span className="font-mono font-bold text-[#0052CC]">{String(params.timeHour).padStart(2, '0')}:00 UTC</span>
+                  <label htmlFor={timeId}>Origin Hour (IST)</label>
+                  <span className="font-mono font-bold text-[#0052CC]">{String(params.timeHour).padStart(2, '0')}:00 IST</span>
                 </div>
                 <input
                   id={timeId}
@@ -415,7 +403,6 @@ export default function InteractiveAnomalySandbox({ initialTx, onClearInspectedT
                 </div>
               </div>
 
-              {/* Device Entropy */}
               <fieldset>
                 <legend className="font-semibold text-slate-700 mb-1.5">Device &amp; IP Risk Entropy</legend>
                 <div className="grid grid-cols-3 gap-2">
@@ -440,7 +427,6 @@ export default function InteractiveAnomalySandbox({ initialTx, onClearInspectedT
                 </div>
               </fieldset>
 
-              {/* Beneficiary & Tenure */}
               <div className="grid grid-cols-2 gap-3 pt-1">
                 <label
                   htmlFor={beneficiaryId}
@@ -477,9 +463,7 @@ export default function InteractiveAnomalySandbox({ initialTx, onClearInspectedT
             </button>
           </div>
 
-          {/* Right Column: Score, SHAP Waterfall, and Counterfactual Recourse */}
           <div className="lg:col-span-7 space-y-5">
-            {/* Risk Assessment Summary */}
             <div
               className={`rounded-2xl border p-6 transition-colors ${
                 evaluation.riskTier === 'CRITICAL_ANOMALY'
@@ -495,9 +479,7 @@ export default function InteractiveAnomalySandbox({ initialTx, onClearInspectedT
                     Composite Risk Score
                   </span>
                   <div className="flex items-center gap-3 mt-1">
-                    <span className="text-4xl font-extrabold font-mono text-[#0A2540]">
-                      {evaluation.score}%
-                    </span>
+                    <span className="text-4xl font-extrabold font-mono text-[#0A2540]">{evaluation.score}%</span>
                     <span
                       className={`text-[11px] font-bold uppercase px-2.5 py-1 rounded-full border ${
                         evaluation.riskTier === 'CRITICAL_ANOMALY'
@@ -512,7 +494,6 @@ export default function InteractiveAnomalySandbox({ initialTx, onClearInspectedT
                   </div>
                 </div>
 
-                {/* Automated Policy Action */}
                 <div className="bg-white border border-slate-200 px-4 py-3 rounded-xl flex items-center gap-3 shadow-2xs">
                   <div
                     className={`p-2 rounded-lg ${
@@ -560,7 +541,6 @@ export default function InteractiveAnomalySandbox({ initialTx, onClearInspectedT
               </div>
             </div>
 
-            {/* SHAP Attribution Breakdown */}
             <div className="bank-surface rounded-2xl p-6">
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-4">
                 <div className="flex items-center gap-2">
@@ -612,7 +592,6 @@ export default function InteractiveAnomalySandbox({ initialTx, onClearInspectedT
                 })}
               </div>
 
-              {/* Actionable Counterfactual Recourse Box */}
               {evaluation.recourseSteps.length > 0 && (
                 <div className="mt-5 p-4 rounded-xl bg-sky-50/70 border border-sky-200 text-xs">
                   <div className="flex items-center gap-2 font-bold text-[#0A2540] mb-2">

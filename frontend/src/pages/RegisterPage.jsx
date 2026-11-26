@@ -138,7 +138,7 @@ export default function RegisterPage() {
         full_name: formData.fullName.trim(),
         email: formData.email.trim(),
         username: formData.username.trim().toLowerCase(),
-        phone: formData.phone.trim() || '+1 (555) 019-2834',
+        phone: formData.phone.trim() || '+91 98400 00000',
         password: formData.password,
         role: formData.role,
         terms_accepted: formData.termsAccepted,

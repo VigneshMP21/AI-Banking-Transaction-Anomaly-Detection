@@ -5,20 +5,20 @@ const INITIAL_TRANSACTIONS = [
   {
     id: 'TX-948120',
     time: '22:04:12.410',
-    type: 'SWIFT Wire',
+    type: 'RTGS Wire',
     channelIcon: Globe,
-    sender: 'ACC-8812 (Geneva)',
-    recipient: 'ACC-4910 (Cayman)',
-    amount: 142500,
-    currency: '$',
+    sender: 'ACC-8812 (Mumbai)',
+    recipient: 'ACC-4910 (Proxy Hub)',
+    amount: 442500,
+    currency: '₹',
     riskScore: 89,
     status: 'CRITICAL',
-    trigger: 'Offshore high-velocity wire + Unseen beneficiary + Geo-hop delta',
+    trigger: 'High-velocity RTGS anomaly + Unseen beneficiary + Geo-hop delta',
     model: 'Ensemble (VAE + XGBoost)',
     sandboxPreset: {
-      amount: 142500,
+      amount: 442500,
       velocity: 11,
-      geoDistance: 8200,
+      geoDistance: 2100,
       timeHour: 2,
       deviceEntropy: 'high',
       accountAgeMonths: 6,
@@ -30,16 +30,16 @@ const INITIAL_TRANSACTIONS = [
     time: '22:04:11.890',
     type: 'POS Terminal',
     channelIcon: CreditCard,
-    sender: 'ACC-3129 (London)',
-    recipient: 'Whole Foods Retail',
-    amount: 84.5,
-    currency: '£',
+    sender: 'ACC-3129 (Chennai)',
+    recipient: 'Reliance Fresh Retail',
+    amount: 1840.5,
+    currency: '₹',
     riskScore: 4,
     status: 'NORMAL',
     trigger: 'Matches 90-day habitual spending baseline & trusted device',
     model: 'XGBoost Baseline',
     sandboxPreset: {
-      amount: 85,
+      amount: 1840,
       velocity: 1,
       geoDistance: 0,
       timeHour: 14,
@@ -53,16 +53,16 @@ const INITIAL_TRANSACTIONS = [
     time: '22:04:11.120',
     type: 'ATM Cash Out',
     channelIcon: Building2,
-    sender: 'ACC-1904 (New York)',
+    sender: 'ACC-1904 (Delhi)',
     recipient: 'ATM Terminal #492',
-    amount: 3000,
-    currency: '$',
+    amount: 25000,
+    currency: '₹',
     riskScore: 68,
     status: 'SUSPICIOUS',
     trigger: 'Midnight withdrawal surge + Consecutive attempts within 40s',
     model: 'Isolation Forest',
     sandboxPreset: {
-      amount: 3000,
+      amount: 25000,
       velocity: 9,
       geoDistance: 650,
       timeHour: 3,
@@ -74,15 +74,15 @@ const INITIAL_TRANSACTIONS = [
   {
     id: 'TX-948117',
     time: '22:04:10.550',
-    type: 'Mobile P2P (UPI)',
+    type: 'UPI Instant',
     channelIcon: Smartphone,
-    sender: 'ACC-7741 (Mumbai)',
+    sender: 'ACC-7741 (Chennai)',
     recipient: 'ACC-6102 (Bengaluru)',
     amount: 450,
     currency: '₹',
     riskScore: 8,
     status: 'NORMAL',
-    trigger: 'Whitelisted contact + Verified hardware biometric token',
+    trigger: 'Whitelisted UPI contact + Verified hardware biometric token',
     model: 'XGBoost Baseline',
     sandboxPreset: {
       amount: 450,
@@ -97,18 +97,18 @@ const INITIAL_TRANSACTIONS = [
   {
     id: 'TX-948116',
     time: '22:04:09.910',
-    type: 'E-Commerce API',
+    type: 'IMPS API',
     channelIcon: CreditCard,
-    sender: 'ACC-5520 (Singapore)',
-    recipient: 'Crypto Exchange Gateway',
-    amount: 9800,
-    currency: '$',
+    sender: 'ACC-5520 (Hyderabad)',
+    recipient: 'Unverified Crypto Desk',
+    amount: 49500,
+    currency: '₹',
     riskScore: 94,
     status: 'CRITICAL',
-    trigger: 'Structuring / Smurfing burst just below $10,000 CTR threshold',
+    trigger: 'Structuring / Smurfing burst just below ₹50,000 PAN threshold',
     model: 'Autoencoder + Velocity',
     sandboxPreset: {
-      amount: 9800,
+      amount: 49500,
       velocity: 16,
       geoDistance: 400,
       timeHour: 15,
@@ -131,15 +131,15 @@ export default function LiveTransactionStream({ onSelectTx, activeTxId }) {
       const isAnomaly = Math.random() > 0.68;
       const isSuspicious = !isAnomaly && Math.random() > 0.5;
 
-      const types = ['SWIFT Wire', 'POS Terminal', 'ATM Cash Out', 'Mobile P2P', 'E-Commerce API'];
+      const types = ['RTGS Wire', 'POS Terminal', 'ATM Cash Out', 'UPI Instant', 'NEFT / IMPS'];
       const icons = [Globe, CreditCard, Building2, Smartphone, CreditCard];
       const typeIdx = Math.floor(Math.random() * types.length);
 
       let riskScore = Math.floor(Math.random() * 18 + 3);
       let status = 'NORMAL';
-      let trigger = 'Verified device signature & normal merchant profile';
+      let trigger = 'Verified device signature & normal Indian merchant profile';
       let model = 'XGBoost Baseline';
-      let amount = +(Math.random() * 450 + 25).toFixed(2);
+      let amount = +(Math.random() * 4500 + 150).toFixed(2);
       let sandboxPreset = {
         amount: Math.round(amount),
         velocity: 1,
@@ -153,13 +153,13 @@ export default function LiveTransactionStream({ onSelectTx, activeTxId }) {
       if (isAnomaly) {
         riskScore = Math.floor(Math.random() * 22 + 76);
         status = 'CRITICAL';
-        amount = Math.floor(Math.random() * 85000 + 12000);
-        trigger = 'Impossible travel speed + Unrecognized device entropy';
+        amount = Math.floor(Math.random() * 450000 + 85000);
+        trigger = 'Impossible travel speed (Chennai → Delhi in 12m) + Elevated entropy';
         model = 'VAE + Isolation Forest';
         sandboxPreset = {
-          amount: Math.min(100000, amount),
+          amount: Math.min(1500000, amount),
           velocity: 14,
-          geoDistance: 8900,
+          geoDistance: 2200,
           timeHour: 2,
           deviceEntropy: 'high',
           accountAgeMonths: 4,
@@ -168,7 +168,7 @@ export default function LiveTransactionStream({ onSelectTx, activeTxId }) {
       } else if (isSuspicious) {
         riskScore = Math.floor(Math.random() * 26 + 46);
         status = 'SUSPICIOUS';
-        amount = Math.floor(Math.random() * 3500 + 1200);
+        amount = Math.floor(Math.random() * 45000 + 18000);
         trigger = 'Elevated 1h velocity vs 90-day account baseline';
         model = 'XGBoost + Velocity';
         sandboxPreset = {
@@ -185,15 +185,18 @@ export default function LiveTransactionStream({ onSelectTx, activeTxId }) {
       const now = new Date();
       const timeStr = now.toTimeString().split(' ')[0] + '.' + String(now.getMilliseconds()).padStart(3, '0');
 
+      const originCities = ['Mumbai', 'Chennai', 'Bengaluru', 'Delhi', 'Hyderabad'];
+      const destCities = ['Pune', 'Kolkata', 'Kochi', 'Ahmedabad', 'Jaipur'];
+
       const newTx = {
         id: `TX-${Math.floor(Math.random() * 900000 + 100000)}`,
         time: timeStr,
         type: types[typeIdx],
         channelIcon: icons[typeIdx],
-        sender: `ACC-${Math.floor(Math.random() * 8999 + 1000)} (${['Mumbai', 'Chennai', 'London', 'Zurich', 'Singapore'][Math.floor(Math.random() * 5)]})`,
-        recipient: `ACC-${Math.floor(Math.random() * 8999 + 1000)} (${['Bengaluru', 'New York', 'Frankfurt', 'Dubai', 'Toronto'][Math.floor(Math.random() * 5)]})`,
+        sender: `ACC-${Math.floor(Math.random() * 8999 + 1000)} (${originCities[Math.floor(Math.random() * originCities.length)]})`,
+        recipient: `ACC-${Math.floor(Math.random() * 8999 + 1000)} (${destCities[Math.floor(Math.random() * destCities.length)]})`,
         amount,
-        currency: '$',
+        currency: '₹',
         riskScore,
         status,
         trigger,
@@ -215,7 +218,6 @@ export default function LiveTransactionStream({ onSelectTx, activeTxId }) {
   return (
     <section id="features" className="py-16 sm:py-20 bg-[#F8FAFC] border-b border-slate-200/80">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        {/* Section Header */}
         <div className="flex flex-col md:flex-row md:items-end justify-between mb-8 gap-4">
           <div>
             <div className="inline-flex items-center gap-2 text-[#0052CC] font-mono text-xs font-bold tracking-wider uppercase mb-2">
@@ -226,11 +228,10 @@ export default function LiveTransactionStream({ onSelectTx, activeTxId }) {
               Transaction Surveillance Stream
             </h2>
             <p className="text-slate-600 text-sm mt-1.5 max-w-2xl">
-              Simulated multi-channel banking feed demonstrating real-time scoring. Select any row or click <strong>Inspect</strong> to load its parameters into the SHAP Risk Sandbox below.
+              Simulated Indian multi-channel banking feed (UPI, IMPS, NEFT, RTGS, POS, ATM). Click <strong>Inspect</strong> on any row to load its parameters into the SHAP Risk Sandbox below.
             </p>
           </div>
 
-          {/* Filter & Stream Controls */}
           <div className="flex items-center gap-2.5 flex-wrap">
             <div role="group" aria-label="Filter transactions by risk status" className="inline-flex items-center bg-white border border-slate-200 rounded-xl p-1 text-xs shadow-2xs">
               {['ALL', 'CRITICAL', 'SUSPICIOUS', 'NORMAL'].map((f) => (
@@ -270,24 +271,18 @@ export default function LiveTransactionStream({ onSelectTx, activeTxId }) {
           </div>
         </div>
 
-        {/* Semantic Accessible Table Container */}
         <div className="bank-surface rounded-2xl overflow-hidden">
-          <div
-            tabIndex={0}
-            role="region"
-            aria-labelledby="live-stream-heading"
-            className="table-scroll-region"
-          >
+          <div tabIndex={0} role="region" aria-labelledby="live-stream-heading" className="table-scroll-region">
             <table className="w-full text-left border-collapse min-w-[820px]">
               <caption className="visually-hidden">
-                Simulated banking transactions with risk score, policy decision, and AI attribution triggers.
+                Simulated Indian banking transactions with risk score, policy decision, and AI attribution triggers.
               </caption>
               <thead>
                 <tr className="bg-slate-50 border-b border-slate-200 text-[11px] font-mono uppercase tracking-wider text-slate-600">
                   <th scope="col" className="py-3.5 px-5 font-bold">Tx ID &amp; Time</th>
                   <th scope="col" className="py-3.5 px-4 font-bold">Channel</th>
                   <th scope="col" className="py-3.5 px-4 font-bold">Origin &rarr; Beneficiary</th>
-                  <th scope="col" className="py-3.5 px-4 font-bold text-right">Amount</th>
+                  <th scope="col" className="py-3.5 px-4 font-bold text-right">Amount (INR)</th>
                   <th scope="col" className="py-3.5 px-4 font-bold text-center">Risk Score</th>
                   <th scope="col" className="py-3.5 px-4 font-bold">Status</th>
                   <th scope="col" className="py-3.5 px-4 font-bold">Primary Trigger</th>
@@ -301,9 +296,7 @@ export default function LiveTransactionStream({ onSelectTx, activeTxId }) {
                   return (
                     <tr
                       key={tx.id}
-                      className={`transition-colors ${
-                        isInspected ? 'bg-sky-50/80' : 'hover:bg-slate-50/90'
-                      }`}
+                      className={`transition-colors ${isInspected ? 'bg-sky-50/80' : 'hover:bg-slate-50/90'}`}
                     >
                       <th scope="row" className="py-3 px-5 font-mono text-left font-normal">
                         <div className="font-bold text-[#0A2540]">{tx.id}</div>
@@ -325,7 +318,7 @@ export default function LiveTransactionStream({ onSelectTx, activeTxId }) {
                       </td>
 
                       <td className="py-3 px-4 text-right font-mono font-bold text-[#0A2540] whitespace-nowrap">
-                        {tx.currency}{tx.amount.toLocaleString()}
+                        {tx.currency}{tx.amount.toLocaleString('en-IN')}
                       </td>
 
                       <td className="py-3 px-4 text-center">

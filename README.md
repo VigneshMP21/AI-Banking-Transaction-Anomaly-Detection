@@ -34,8 +34,10 @@
 - **PostgreSQL (`pgAdmin 4`) & SQLite Fallback Connector (`backend/database.py`, `DbConfigPage.jsx`)**
   - Dynamic PostgreSQL connection testing and table initialization (`/api/db/status`, `/api/db/connect`, `/api/db/init`).
   - Automatic local SQLite fallback (`bankguard_fallback.db`) so the API boots cleanly even before PostgreSQL is configured.
-- **Role-Based Banking Portal (`BankingPortalPage.jsx`)**
-  - Sidebar portal with Admin/User switcher, KPI cards, trend & risk distribution charts, transaction inspection modal, transfer simulator, and user directory.
+- **Role-Based Banking Portal (`BankingPortalPage.jsx`) — Localized for India (`INR` / `₹`)**
+  - Strict role-locked sidebar derived from the authenticated JWT role (no manual Admin/User toggle).
+  - **Customer View**: Live account balance & DB-scoped KPIs (`/api/portal/summary`), dedicated **Send Money** page (`/api/transactions/transfer`) with real-time **Step-Up 6-Digit OTP MFA** (`/api/transactions/verify-otp`), **My Transactions** ledger (Sent/Received direction, counterparty details, CSV export, SHAP inspection), live **Alerts** with read-state tracking, and **Editable Profile & Password** management.
+  - **Risk Analyst / Admin View**: Bank-wide KPIs, All Transactions, AI Anomaly Analyzer, User Management, Flagged Alerts, and Security Audit Logs.
 
 ### Planned Engineering Roadmap (Next Sprints)
 | Sprint | Milestone | Status | Scope |

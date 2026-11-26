@@ -90,7 +90,7 @@ export default function Hero() {
                   </div>
                   <div>
                     <div className="text-xs font-bold text-white">Real-Time Risk Decision Trace</div>
-                    <div className="text-[11px] text-slate-400 font-mono">TX-948120 • SWIFT Cross-Border Wire</div>
+                    <div className="text-[11px] text-slate-400 font-mono">TX-948120 &bull; IMPS High-Value Rail</div>
                   </div>
                 </div>
                 <span className="px-2.5 py-1 rounded-full bg-rose-500/15 border border-rose-400/30 text-rose-300 font-mono text-[11px] font-bold">
@@ -102,7 +102,7 @@ export default function Hero() {
               <div className="grid grid-cols-3 gap-3 my-5">
                 <div className="p-3 rounded-xl bg-slate-900/70 border border-slate-800">
                   <div className="text-[10px] font-mono uppercase text-slate-400">Payload</div>
-                  <div className="text-base font-bold font-mono text-white mt-0.5">$142,500</div>
+                  <div className="text-base font-bold font-mono text-white mt-0.5">&#8377;1,42,500</div>
                 </div>
                 <div className="p-3 rounded-xl bg-slate-900/70 border border-slate-800">
                   <div className="text-[10px] font-mono uppercase text-slate-400">Composite Risk</div>
@@ -124,14 +124,14 @@ export default function Hero() {
                   <div className="flex items-center justify-between text-xs p-2.5 rounded-lg bg-slate-900/60 border border-slate-800">
                     <span className="text-slate-200 flex items-center gap-2">
                       <AlertTriangle className="w-3.5 h-3.5 text-rose-400 shrink-0" aria-hidden="true" />
-                      Impossible Geo-Hop Velocity (8,200 km/h)
+                      Impossible Geo-Hop (Chennai &rarr; Delhi in 12m)
                     </span>
                     <span className="font-mono font-bold text-rose-400">+34.0%</span>
                   </div>
                   <div className="flex items-center justify-between text-xs p-2.5 rounded-lg bg-slate-900/60 border border-slate-800">
                     <span className="text-slate-200 flex items-center gap-2">
                       <AlertTriangle className="w-3.5 h-3.5 text-amber-400 shrink-0" aria-hidden="true" />
-                      Unrecognized Device &amp; Offshore Corridor
+                      Unrecognized Device &amp; Proxy Corridor
                     </span>
                     <span className="font-mono font-bold text-rose-400">+28.5%</span>
                   </div>

@@ -3,16 +3,16 @@ import { Award, CheckCircle2 } from 'lucide-react';
 
 const COMPLIANCE_ITEMS = [
   {
-    title: 'GDPR Article 22 (Right to Explanation)',
-    code: 'EU-GDPR-22',
+    title: 'RBI Digital Payment Security & DPDP Act',
+    code: 'RBI-DPDP-23',
     description:
-      'Delivers human-readable SHAP feature breakdowns and counterfactual recourse whenever a transaction is held or blocked.',
+      'Aligns with Indian digital payment security controls and DPDP transparency by explaining automated holds and offering Step-Up MFA.',
   },
   {
-    title: 'Basel III Operational Risk Traceability',
+    title: 'GDPR Article 22 & Basel III Traceability',
     code: 'BCBS-239',
     description:
-      'Maintains structured transaction records, risk scores, and analyst dispositions for reproducible risk auditing.',
+      'Maintains structured transaction records, SHAP risk scores, and analyst dispositions for reproducible risk auditing.',
   },
   {
     title: 'Cryptographic Auth & Audit Trails',
