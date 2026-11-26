@@ -29,6 +29,9 @@ eggs/
 *.sqlite
 *.sqlite3
 backend/ml_artifacts/
+datasets/*.zip
+datasets/*.csv
+datasets/bankguard_ready/*.csv
 
 # IDE and OS
 .vscode/

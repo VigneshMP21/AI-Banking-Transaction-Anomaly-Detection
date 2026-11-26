@@ -166,12 +166,13 @@ def inspect_dataframe(df: pd.DataFrame) -> Dict[str, Any]:
     """Inspect uploaded CSV or generated dataframe schema, missingness, and class balance."""
     cols = list(df.columns)
     candidate_targets = [
-        c for c in cols if c.lower() in {"is_fraud", "isfraud", "class", "fraud", "label", "target", "anomaly"}
+        c for c in cols if c.lower() in {"is_fraud", "isfraud", "class", "fraud_bool", "fraud", "label", "target", "anomaly"}
     ]
     detected_target = candidate_targets[0] if candidate_targets else None
 
     numeric_cols = [c for c in cols if pd.api.types.is_numeric_dtype(df[c])]
     categorical_cols = [c for c in cols if c not in numeric_cols]
+    dtypes = {c: str(df[c].dtype) for c in cols}
 
     class_balance = None
     if detected_target is not None:
@@ -190,7 +191,9 @@ def inspect_dataframe(df: pd.DataFrame) -> Dict[str, Any]:
     preview_rows = df.head(5).fillna("").to_dict(orient="records")
     return {
         "rows": int(len(df)),
+        "cols": int(len(cols)),
         "columns": cols,
+        "dtypes": dtypes,
         "numeric_columns": numeric_cols,
         "categorical_columns": categorical_cols,
         "missing_cells": int(df.isna().sum().sum()),
@@ -198,6 +201,7 @@ def inspect_dataframe(df: pd.DataFrame) -> Dict[str, Any]:
         "class_balance": class_balance,
         "is_canonical_schema": is_canonical,
         "preview": preview_rows,
+        "sample_rows": preview_rows,
     }
 
 
@@ -208,7 +212,7 @@ def _extract_features_and_target(
     cols = list(df.columns)
     if target_col is None:
         for c in cols:
-            if c.lower() in {"is_fraud", "isfraud", "class", "fraud", "label", "target", "anomaly"}:
+            if c.lower() in {"is_fraud", "isfraud", "class", "fraud_bool", "fraud", "label", "target", "anomaly"}:
                 target_col = c
                 break
 
